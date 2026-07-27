@@ -1,5 +1,7 @@
 # Lilith AI MOD 0.1.1 RC4
 
+[Home](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · **English** · [Português (BR)](README_pt-BR.md)
+
 This is an unofficial community MOD for the desktop companion game *The NOexistenceN of Lilith*. It adds AI conversations, text and voice input, Chinese and Japanese voice output, voice lines for previously unvoiced dialogue, weather features, and reviewed local computer controls.
 
 ## RC4 Update
@@ -79,7 +81,7 @@ Updates will not overwrite existing API keys, chat memory, key bindings, or play
 
 ## Distribution Notice
 
-## Unofficial AI Voice MOD Disclaimer
+### Unofficial AI Voice MOD Disclaimer
 
 This MOD is an unofficial, non-commercial game modification independently created by a player. It is provided solely for game-related community use and personal entertainment.
 
@@ -113,6 +115,6 @@ Contact: **[mimimi5206666@gmail.com]**
 
 Upon receiving a specific and verifiable rights-related notice, the creator will promptly review the matter and, where appropriate, suspend distribution, remove, or modify the relevant content.
 
-Publisher: MIMI
-Version: 0.1.1-RC4
-Release Date: July 18, 2026
+**Publisher:** MIMI  
+**Version:** 0.1.1-RC4  
+**Release Date:** July 18, 2026

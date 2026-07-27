@@ -2,14 +2,17 @@
 
 # ♡ Lilith AI MOD ♡
 
-### 讓莉莉絲不只待在桌面，也能真正聽見你、記得你、回應你。
-### Let Lilith hear you, remember you, and answer in her own voice.
+**讓莉莉絲不只待在桌面，也能真正聽見你、記得你、回應你。**  
+**Let Lilith hear you, remember you, and answer in her own voice.**
 
-🍓 **Unofficial Community MOD · 非官方社群 MOD** 🍓
+🍓 Unofficial Community MOD · 非官方社群 MOD 🍓
 
-[繁體中文說明](README_繁體中文.md) · [简体中文说明](README_简体中文.md) · [日本語ガイド](README_日本語.md) · [English Guide](README_EN.md)
+[![Version](https://img.shields.io/badge/version-0.1.1--RC4-ff69b4?style=flat-square)](https://github.com/mimimi6666/Lilith-AI-Mod/releases)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d6?style=flat-square)
+![Providers](https://img.shields.io/badge/AI-Gemini%20%C2%B7%20Qwen%20%C2%B7%20OpenAI%20%C2%B7%20DeepSeek-8a2be2?style=flat-square)
+[![Discord](https://img.shields.io/badge/Discord-join-5865f2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/JGAHnxjbj)
 
-- **[Discord](https://discord.gg/JGAHnxjbj)**
+**Home** · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
 
 </div>
 
@@ -185,11 +188,8 @@ AI chat and speech recognition are sent to the provider selected by the player. 
 
 ## ♡ 完整說明 / Full guides
 
-- [繁體中文](README_繁體中文.md)
-- [简体中文](README_简体中文.md)
-- [日本語](README_日本語.md)
-- [English](README_EN.md)
-- [Third-party licenses](THIRD_PARTY_NOTICES.md)
+- 各語言完整說明 / Full guide by language：[繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
+- 第三方元件與授權 / Third-party licenses：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 
 ## ⚠ 非官方聲明 / Unofficial project notice
 
@@ -206,4 +206,3 @@ This is a free, non-commercial fan project. It is not authorized, endorsed, spon
 **Version 0.1.1-RC4 · Publisher: MIMI**
 
 </div>
-

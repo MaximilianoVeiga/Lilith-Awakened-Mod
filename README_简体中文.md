@@ -1,5 +1,7 @@
 # 莉莉丝 AI MOD 0.1.1 RC4
 
+[Home](README.md) · [繁體中文](README_繁體中文.md) · **简体中文** · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
+
 这是《The NOexistenceN of Lilith》桌宠的非官方社区 MOD，加入 AI 对话、文字与语音输入、中日文语音、无配音台词补音、天气查询和受限制的本机电脑操作。
 
 ## RC4 更新
@@ -60,7 +62,7 @@ OpenAI 与 DeepSeek 目前仅提供**实验性的文字聊天兼容层**。基�
 - 语音安装日志：`BepInEx\data\LilithTextInjector\voice-runtime\voice-runtime-install.log`
 
 ## 发布注意
-## 非官方 AI 语音 MOD 声明
+### 非官方 AI 语音 MOD 声明
 
 本 MOD 为玩家自行制作的非官方、非商业性游戏模组，仅供游戏交流与个人娱乐使用。
 
@@ -80,6 +82,6 @@ OpenAI 与 DeepSeek 目前仅提供**实验性的文字聊天兼容层**。基�
 
 作者收到具体且可验证的权利通知后，将及时核实，并视情况停止提供、删除或调整相关内容。
 
-发布者：米米
-版本：0.1.1-RC4
-发布日期：2026/7/18
+**发布者：** 米米  
+**版本：** 0.1.1-RC4  
+**发布日期：** 2026/7/18
