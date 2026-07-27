@@ -1,9 +1,10 @@
 namespace LilithTextInjector;
 
-// Provider-agnostic chat entry point, reply post-processing and emotion selection.
+// Chat request router: provider selection, reply post-processing and emotion selection.
+// Entry point is RequestChatAsync (formerly RequestGeminiAsync).
 internal static partial class DialogueManagerUpdatePatch
 {
-    private static async Task RequestGeminiAsync(string userText, string playerName, PoseContext poseContext)
+    private static async Task RequestChatAsync(string userText, string playerName, PoseContext poseContext)
     {
         GeminiAgentSession? agentSession = null;
         try
@@ -44,7 +45,7 @@ internal static partial class DialogueManagerUpdatePatch
             }
             if (!string.Equals(activeProvider, "Gemini", StringComparison.Ordinal))
             {
-                await RequestOpenAiCompatibleAsync(activeProvider, systemInstruction, userText, poseContext, japaneseVoiceMode).ConfigureAwait(false);
+                await OpenAiCompatibleClient.RequestAsync(activeProvider, systemInstruction, userText, poseContext, japaneseVoiceMode, CompleteAiReply).ConfigureAwait(false);
                 return;
             }
             agentSession = new GeminiAgentSession
@@ -81,7 +82,7 @@ internal static partial class DialogueManagerUpdatePatch
         }
     }
 
-    private static void CompleteAiReply(string rawReply, string userText, PoseContext poseContext, bool japaneseVoiceMode)
+    internal static void CompleteAiReply(string rawReply, string userText, PoseContext poseContext, bool japaneseVoiceMode)
     {
         var bilingual = japaneseVoiceMode ? ParseBilingualReply(rawReply) : null;
         var reply = CleanReply(bilingual?.DisplayText ?? rawReply);
@@ -102,7 +103,7 @@ internal static partial class DialogueManagerUpdatePatch
         _ = RequestSpeechAsync(speechText.Length > 0 ? speechText : reply, reaction, poseContext.VoiceStyle, japaneseVoiceMode);
     }
 
-    private static string NormalizeAiProvider(string? provider)
+    internal static string NormalizeAiProvider(string? provider)
     {
         if (string.Equals(provider, "Qwen", StringComparison.OrdinalIgnoreCase)
             || string.Equals(provider, "Tongyi", StringComparison.OrdinalIgnoreCase)
@@ -187,7 +188,7 @@ internal static partial class DialogueManagerUpdatePatch
         }
     }
 
-    private static string CleanReply(string? reply)
+    internal static string CleanReply(string? reply)
     {
         if (string.IsNullOrWhiteSpace(reply))
             return string.Empty;

@@ -1,6 +1,7 @@
 namespace LilithTextInjector;
 
-// Qwen (DashScope) request/response handling and tool execution.
+// Qwen (DashScope) provider module: request/response handling and tool execution.
+// Remains a DialogueManagerUpdatePatch partial because tool batches share patch queues/state.
 internal static partial class DialogueManagerUpdatePatch
 {
     private static async Task RequestQwenResponsesAsync(string systemInstruction, string userText,
@@ -25,11 +26,8 @@ internal static partial class DialogueManagerUpdatePatch
     private static object[] BuildQwenInput()
     {
         var input = new List<object>();
-        lock (MemoryLock)
-        {
-            foreach (var turn in RecentConversation)
-                input.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text });
-        }
+        ChatMemory.ForEach(turn =>
+            input.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text }));
         return input.ToArray();
     }
 
@@ -54,7 +52,7 @@ internal static partial class DialogueManagerUpdatePatch
         using var request = new HttpRequestMessage(HttpMethod.Post, session.Url);
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Plugin.QwenApiKey.Value.Trim());
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        using var response = await Http.SendAsync(request).ConfigureAwait(false);
+        using var response = await AiHttp.Client.SendAsync(request).ConfigureAwait(false);
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Qwen HTTP {(int)response.StatusCode}: {responseBody}");
@@ -217,39 +215,19 @@ internal static partial class DialogueManagerUpdatePatch
         }
     }
 
-    private static string NormalizeQwenBaseUrl(string? value)
+    internal static string NormalizeQwenBaseUrl(string? value)
     {
         var baseUrl = (value ?? string.Empty).Trim().TrimEnd('/');
         return baseUrl.Length > 0 ? baseUrl : "https://dashscope.aliyuncs.com/compatible-mode/v1";
     }
 
-    private static bool IsQwenAccountUnavailable(Exception exception)
+    internal static bool IsQwenAccountUnavailable(Exception exception)
         => Regex.IsMatch(exception.ToString(), "Arrearage|overdue-payment|account is in good standing", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    private static string QwenAccountUnavailableReply()
+    internal static string QwenAccountUnavailableReply()
         => ApiKeyText(
             "千問帳戶目前被服務端拒絕了。請到阿里雲模型服務檢查免費額度或開通計費後再試。",
             "千问账户目前被服务端拒绝了。请到阿里云模型服务检查免费额度或开通计费后再试。",
             "千問アカウントがサーバー側で拒否されているよ。無料枠または課金状態を確認してから、もう一度試してね。",
             "The Qwen account was rejected by the service. Check the free quota or billing status in Model Studio and try again.");
-
-    private sealed class QwenAgentSession
-    {
-        public string Url { get; set; } = string.Empty;
-        public string SystemInstruction { get; set; } = string.Empty;
-        public string UserText { get; set; } = string.Empty;
-        public PoseContext PoseContext { get; set; } = PoseContext.Default;
-        public bool JapaneseVoiceMode { get; set; }
-        public bool UseWebSearch { get; set; }
-        public bool ForceWebSearch { get; set; }
-        public bool DesktopToolsEnabled { get; set; }
-        public int ToolRounds { get; set; }
-        public List<object> Input { get; set; } = new();
-    }
-
-    private sealed class QwenToolBatch
-    {
-        public QwenAgentSession Session { get; set; } = new();
-        public List<GeminiFunctionCallData> Calls { get; set; } = new();
-    }
 }

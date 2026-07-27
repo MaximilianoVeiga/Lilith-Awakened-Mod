@@ -180,7 +180,7 @@ internal static partial class DialogueManagerUpdatePatch
         }
     }
 
-    private static bool IsJapaneseVoiceMode()
+    internal static bool IsJapaneseVoiceMode()
     {
         if (_japaneseVoiceOverride.HasValue)
             return _japaneseVoiceOverride.Value;

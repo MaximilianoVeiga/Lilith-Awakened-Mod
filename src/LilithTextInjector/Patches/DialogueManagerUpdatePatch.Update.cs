@@ -24,57 +24,9 @@ internal static partial class DialogueManagerUpdatePatch
         ObserveCurrentNativeNode(__instance);
         PollCodexBridgeEvents();
         ProcessPendingCodexSignal(__instance);
-        if (!_nativeDatabaseDumpCompleted)
-            TryDumpNativeDialogueDatabases(__instance);
-        if (!_localizedLineDatabasesDumped)
-            TryDumpLocalizedLineDatabases();
+        NativeVoicePack.MaybeDumpDialogueDatabases(__instance);
 
-        if (_voicePitchResetAt >= 0f && Time.unscaledTime >= _voicePitchResetAt)
-        {
-            SetVoicePitch(1f);
-            _voicePitchResetAt = -1f;
-        }
-
-        if (_delayedSpeechAudio != null && Time.unscaledTime >= _delayedSpeechPlayAt)
-        {
-            try
-            {
-                var pitch = Math.Clamp(Plugin.ReactionFollowupPitch.Value, 0.8f, 1.2f);
-                SetVoicePitch(pitch);
-                var clip = PlayWav(_delayedSpeechAudio, "generated speech");
-                _voicePitchResetAt = Time.unscaledTime + clip.length / Math.Max(0.01f, pitch) + 0.05f;
-            }
-            catch (Exception exception)
-            {
-                Plugin.PluginLog.LogError($"Could not play generated voice: {exception}");
-            }
-            _delayedSpeechAudio = null;
-            _delayedSpeechPlayAt = -1f;
-        }
-        else if (_delayedSpeechAudio == null && PendingVoiceAudio.TryDequeue(out var sequence))
-        {
-            try
-            {
-                if (sequence.Reaction != null)
-                {
-                    SetVoicePitch(1f);
-                    var reactionClip = PlayWav(sequence.Reaction, "native reaction");
-                    _delayedSpeechAudio = sequence.Speech;
-                    _delayedSpeechPlayAt = Time.unscaledTime + reactionClip.length + 0.03f;
-                }
-                else
-                {
-                    SetVoicePitch(1f);
-                    PlayWav(sequence.Speech, "generated speech");
-                }
-            }
-            catch (Exception exception)
-            {
-                Plugin.PluginLog.LogError($"Could not play voice sequence: {exception}");
-                _delayedSpeechAudio = null;
-                _delayedSpeechPlayAt = -1f;
-            }
-        }
+        SpeechSynth.ProcessPending();
 
         if (_requestInFlight && PendingReplies.TryDequeue(out var pendingReply))
         {
@@ -242,7 +194,7 @@ internal static partial class DialogueManagerUpdatePatch
             var playerName = Archive.Instance != null ? Archive.Instance.playerName : string.Empty;
             if (PlayerNameRule.IsUnsetName(playerName))
                 playerName = string.Empty;
-            _ = RequestGeminiAsync(submitted, playerName, CapturePoseContext());
+            _ = RequestChatAsync(submitted, playerName, CapturePoseContext());
         }
         Plugin.PluginLog.LogInfo($"Submitted AI input ({submitted.Length} chars).");
     }

@@ -234,7 +234,7 @@ internal static partial class DialogueManagerUpdatePatch
         _keyBindingStartedAt = -1f;
         RebindingHeldVirtualKeys.Clear();
         _textInputKeyWasDown = IsKeyCurrentlyDown(Plugin.TextInputKey.Value);
-        _voiceInputKeyWasDown = IsKeyCurrentlyDown(Plugin.VoiceInputKey.Value);
+        VoiceInputService.KeyWasDown = IsKeyCurrentlyDown(Plugin.VoiceInputKey.Value);
         UpdateKeyBindingTexts();
     }
 

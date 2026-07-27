@@ -1,6 +1,7 @@
 namespace LilithTextInjector;
 
-// Gemini request/response handling, desktop tool declarations and tool execution.
+// Gemini provider module: request/response, desktop tool declarations and tool execution.
+// Remains a DialogueManagerUpdatePatch partial because tool execution shares patch queues/state.
 internal static partial class DialogueManagerUpdatePatch
 {
     private static async Task SendGeminiAgentRequestAsync(GeminiAgentSession session)
@@ -29,7 +30,7 @@ internal static partial class DialogueManagerUpdatePatch
         using var request = new HttpRequestMessage(HttpMethod.Post, session.Url);
         request.Headers.Add("x-goog-api-key", Plugin.GeminiApiKey.Value.Trim());
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        using var response = await Http.SendAsync(request).ConfigureAwait(false);
+        using var response = await AiHttp.Client.SendAsync(request).ConfigureAwait(false);
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"Gemini HTTP {(int)response.StatusCode}: {responseBody}");
@@ -350,7 +351,7 @@ internal static partial class DialogueManagerUpdatePatch
     {
         if (string.IsNullOrWhiteSpace(content))
             return ToolResult(call, false, "No text was provided.");
-        if (ContainsSensitiveNoteData(content))
+        if (AiNoteStore.ContainsSensitiveNoteData(content))
             return ToolResult(call, false, "Credential-like or personal text was blocked and was not copied.");
         GUIUtility.systemCopyBuffer = content;
         Plugin.PluginLog.LogInfo($"AI tool copied user-specified text locally ({content.Length} chars; content hidden)." );
@@ -361,7 +362,7 @@ internal static partial class DialogueManagerUpdatePatch
     {
         if (string.IsNullOrWhiteSpace(query))
             return ToolResult(call, false, "No search query was provided.");
-        if (ContainsSensitiveNoteData(query))
+        if (AiNoteStore.ContainsSensitiveNoteData(query))
             return ToolResult(call, false, "The search was blocked because it may contain personal or credential information.");
         Process.Start(new ProcessStartInfo("https://www.google.com/search?q=" + Uri.EscapeDataString(query)) { UseShellExecute = true });
         Plugin.PluginLog.LogInfo($"Opened a user-requested browser search ({query.Length} chars; query hidden)." );
@@ -453,46 +454,9 @@ internal static partial class DialogueManagerUpdatePatch
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     }
 
-    private sealed class GeminiAgentSession
-    {
-        public string Url { get; set; } = string.Empty;
-        public string SystemInstruction { get; set; } = string.Empty;
-        public string UserText { get; set; } = string.Empty;
-        public PoseContext PoseContext { get; set; } = PoseContext.Default;
-        public bool JapaneseVoiceMode { get; set; }
-        public bool UseGoogleSearch { get; set; }
-        public bool DesktopToolsEnabled { get; set; }
-        public int ToolRounds { get; set; }
-        public List<object> Contents { get; set; } = new();
-    }
-
-    private sealed class GeminiFunctionCallData
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Id { get; set; } = string.Empty;
-        public JsonElement Args { get; set; }
-    }
-
-    private sealed class GeminiToolBatch
-    {
-        public GeminiAgentSession Session { get; set; } = new();
-        public List<GeminiFunctionCallData> Calls { get; set; } = new();
-    }
-
-    private sealed class GeminiToolResult
-    {
-        public string Name { get; set; } = string.Empty;
-        public string Id { get; set; } = string.Empty;
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-    }
-
     private static object[] BuildGeminiContents()
     {
-        List<ChatTurn> snapshot;
-        lock (MemoryLock)
-            snapshot = new List<ChatTurn>(RecentConversation);
-
+        var snapshot = ChatMemory.Snapshot();
         var contents = new List<object>();
         for (var i = 0; i < snapshot.Count; i++)
         {

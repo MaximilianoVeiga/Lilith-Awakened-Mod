@@ -216,6 +216,15 @@ public sealed class Plugin : BasePlugin
         DialogueManagerUpdatePatch.EnsureApplicationLauncherFile();
         DialogueManagerUpdatePatch.LogOfficialApplicationCategories();
         TryCreateAndPatchAll(typeof(DialogueManagerUpdatePatch), PluginGuid, "core dialogue and input hooks");
+        TryCreateAndPatchAll(typeof(DialogueManagerBeginDialoguePatch), PluginGuid + ".begindialogue", "native BeginDialogue voice hooks");
+        TryCreateAndPatchAll(typeof(DialogueManagerApplyAdvancedNodePatch), PluginGuid + ".applyadvanced", "native ApplyAdvancedNode voice hooks");
+        TryCreateAndPatchAll(typeof(DialogueManagerAdvancePatch), PluginGuid + ".advance", "AI dialogue page advance hooks");
+        TryCreateAndPatchAll(typeof(TypewriterStatePatch), PluginGuid + ".typewriterstate", "typewriter state hooks");
+        TryCreateAndPatchAll(typeof(DialogueCompletionPatch), PluginGuid + ".completion", "AI dialogue completion delay hooks");
+        TryCreateAndPatchAll(typeof(DialogueManagerPlayNodeVoicePatch), PluginGuid + ".playnodevoice", "native PlayNodeVoice injection hooks");
+        TryCreateAndPatchAll(typeof(DialogueManagerGetNodeDurationPatch), PluginGuid + ".nodeduration", "native node duration hooks");
+        TryCreateAndPatchAll(typeof(DialogueBubbleUIShowNodeVoicePatch), PluginGuid + ".bubbleshownode", "dialogue bubble native voice hooks");
+        TryCreateAndPatchAll(typeof(TypewriterPlayNativeVoicePatch), PluginGuid + ".typewritervoice", "typewriter native voice hooks");
         TryCreateAndPatchAll(typeof(GiftExchangeApiKeyPatch), PluginGuid + ".apikey", "API key window hooks");
         TryCreateAndPatchAll(typeof(GiftExchangeApiKeyHidePatch), PluginGuid + ".apikeyhide", "API key window isolation hooks");
         TryCreateAndPatchAll(typeof(TrayMenuLocalizationPatch), PluginGuid + ".traylocalization", "tray localization hook");

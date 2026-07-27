@@ -38,7 +38,7 @@ internal static partial class DialogueManagerUpdatePatch
             _lastExternalForegroundWindow = window;
     }
 
-    private static IntPtr GetControllableWindow()
+    internal static IntPtr GetControllableWindow()
     {
         var foreground = GetForegroundWindow();
         if (foreground != IntPtr.Zero && IsWindowVisible(foreground))

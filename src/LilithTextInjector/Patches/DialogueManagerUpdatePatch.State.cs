@@ -1,13 +1,8 @@
 namespace LilithTextInjector;
 
 // Shared mutable state for the dialogue update patch.
-//
-// Every field lives in this one file on purpose. MemoryPath,
-// AiNoteStatePath, ApplicationLauncherPath and UnvoicedManifestPath are
-// initialised from MemoryDirectory, and C# does not guarantee the order
-// in which static initialisers run across separate parts of a partial
-// class. Splitting these across files can silently produce null paths at
-// load, so keep interdependent initialisers together here.
+// Disk paths live in ModDataPaths; chat memory and note persistence live in
+// ChatMemory / AiNoteStore. Queues and Unity-tick flags remain here.
 internal static partial class DialogueManagerUpdatePatch
 {
     private static GameObject? _inputBubble;
@@ -16,48 +11,19 @@ internal static partial class DialogueManagerUpdatePatch
     private static bool _focusNextFrame;
     private static readonly ConcurrentQueue<string> PendingReplies = new();
     private static readonly ConcurrentQueue<string> PendingAiEmotions = new();
-    private static readonly ConcurrentQueue<string> PendingTranscripts = new();
-    private static readonly ConcurrentQueue<string> PendingTranscriptionErrors = new();
-    private static readonly ConcurrentQueue<VoiceSequence> PendingVoiceAudio = new();
+    internal static readonly ConcurrentQueue<string> PendingTranscripts = new();
+    internal static readonly ConcurrentQueue<string> PendingTranscriptionErrors = new();
     private static readonly ConcurrentQueue<GeneratedAiNote> PendingAiNotes = new();
     private static readonly ConcurrentQueue<GeminiToolBatch> PendingGeminiToolBatches = new();
     private static readonly ConcurrentQueue<GeminiAgentSession> PendingGeminiCompatibilityFallbacks = new();
     private static readonly ConcurrentQueue<QwenToolBatch> PendingQwenToolBatches = new();
-    private static readonly object AiNoteLock = new();
-    private static AiNoteState _aiNoteState = new();
     private static bool _aiNoteGenerationInFlight;
     private static float _nextAiNoteCheckAt;
-    private static byte[]? _delayedSpeechAudio;
-    private static float _delayedSpeechPlayAt = -1f;
-    private static float _voicePitchResetAt = -1f;
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(90) };
-    private static bool _requestInFlight;
-    private static bool _transcriptionInFlight;
+    internal static bool _requestInFlight;
     private static bool _aiPagesAwaitingAdvance;
     private static string _currentAiPageText = string.Empty;
     private static float _aiTypingFinishedAt = -1f;
     private static int _repliesSincePlayerNameWasOffered = 3;
-    private static readonly object MemoryLock = new();
-    private static readonly List<ChatTurn> RecentConversation = new();
-    private static readonly string MemoryDirectory = Path.Combine(Paths.BepInExRootPath, "data", "LilithTextInjector");
-    private static readonly string MemoryPath = Path.Combine(MemoryDirectory, "memory.json");
-    private static readonly string AiNoteStatePath = Path.Combine(MemoryDirectory, "ai-note-state.json");
-    private static readonly string ApplicationLauncherPath = Path.Combine(MemoryDirectory, "applications.json");
-    private static readonly object WindowsStartAppsLock = new();
-    private static readonly List<WindowsStartApplication> CachedWindowsStartApps = new();
-    private static DateTimeOffset _windowsStartAppsLoadedAt = DateTimeOffset.MinValue;
-    private static readonly string UnvoicedManifestPath = Path.Combine(MemoryDirectory, "unvoiced-native-lines.tsv");
-    private static readonly object UnvoicedManifestLock = new();
-    private static readonly HashSet<int> RecordedUnvoicedNodeIds = new();
-    private static readonly Dictionary<int, string> NativeVoiceFilesByLineId = new();
-    private static readonly Dictionary<int, float> NativeVoiceDurationByNodeId = new();
-    private static string _loadedNativeVoicePackDirectory = string.Empty;
-    private static int _lastInjectedNativeNodeId = -1;
-    private static float _lastInjectedNativeVoiceAt = -10f;
-    private static int _lastObservedNativeNodeId = -1;
-    private static bool _nativeDatabaseDumpCompleted;
-    private static bool _localizedLineDatabasesDumped;
-    private const int MaxRememberedTurns = 32;
     private static DateTimeOffset _weatherFetchedAt = DateTimeOffset.MinValue;
     private static string _cachedWeatherContext = string.Empty;
     private static bool _ipWeatherLocationResolved;
@@ -69,10 +35,6 @@ internal static partial class DialogueManagerUpdatePatch
     private static bool _voicePreferenceInitialized;
     private static bool _voicePreferenceAppliedToNativeUi;
     private static float _nextJapaneseVoiceToggleRestoreAt;
-    private static bool _voiceHostLaunchAttempted;
-    private static Process? _voiceHostProcess;
-    private static bool? _voiceHostJapaneseMode;
-    private static float _voiceHostRestartAt;
     private static IntPtr _apiKeyTrayPointer;
     private static bool _apiKeyDialogMode;
     private static volatile bool _apiKeyOpenRequested;
@@ -85,18 +47,6 @@ internal static partial class DialogueManagerUpdatePatch
     private static TMP_InputField.ContentType _apiKeyOriginalContentType;
     private static TMP_InputField.LineType _apiKeyOriginalLineType;
     private static int _apiKeyOriginalCharacterLimit;
-    private static bool _microphoneRecording;
-    private static float _microphoneStartedAt;
-    private static WasapiCapture? _wasapiCapture;
-    private static MemoryStream? _wasapiStream;
-    private static WaveFileWriter? _wasapiWriter;
-    private static readonly object WasapiLock = new();
-    private static readonly ConcurrentQueue<byte[]> ParaformerAudioChunks = new();
-    private static Task<string>? _paraformerSessionTask;
-    private static CancellationTokenSource? _paraformerCancellation;
-    private static volatile bool _paraformerFinishRequested;
-    private static WaveFormat? _voiceCaptureFormat;
-    private static double _paraformerResampleAccumulator;
     private static string? _pendingVoiceSubmitText;
     private static float _pendingVoiceSubmitAt = -1f;
     private static bool _testNoteAttempted;
@@ -113,10 +63,9 @@ internal static partial class DialogueManagerUpdatePatch
     private static ButtonToggle? _voiceInputKeyButton;
     private static TMP_Text? _textInputKeyValue;
     private static TMP_Text? _voiceInputKeyValue;
-    private static int _keyBindingTarget;
+    internal static int _keyBindingTarget;
     private static float _keyBindingStartedAt = -1f;
     private static bool _textInputKeyWasDown;
-    private static bool _voiceInputKeyWasDown;
     private static readonly HashSet<int> RebindingHeldVirtualKeys = new();
     private static TraySettingView? _settingsView;
     private static GameObject? _settingsVisibilityTemplateRow;

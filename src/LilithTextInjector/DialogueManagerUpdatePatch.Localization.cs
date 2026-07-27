@@ -3,7 +3,7 @@ namespace LilithTextInjector;
 // Interface-language detection and localised literal selection.
 internal static partial class DialogueManagerUpdatePatch
 {
-    private static string ApiKeyText(string traditionalChinese, string simplifiedChinese, string japanese, string english)
+    internal static string ApiKeyText(string traditionalChinese, string simplifiedChinese, string japanese, string english)
     {
         try
         {

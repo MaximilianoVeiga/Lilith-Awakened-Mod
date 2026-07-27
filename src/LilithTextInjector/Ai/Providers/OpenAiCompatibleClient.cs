@@ -1,22 +1,23 @@
 namespace LilithTextInjector;
 
 // OpenAI-compatible chat completions, used for OpenAI and DeepSeek.
-internal static partial class DialogueManagerUpdatePatch
+internal static class OpenAiCompatibleClient
 {
-    private static async Task RequestOpenAiCompatibleAsync(string provider, string systemInstruction, string userText,
-        PoseContext poseContext, bool japaneseVoiceMode)
+    internal static async Task RequestAsync(string provider, string systemInstruction, string userText,
+        PoseContext poseContext, bool japaneseVoiceMode,
+        Action<string, string, PoseContext, bool> completeReply)
     {
         var endpoint = provider == "DeepSeek"
             ? "https://api.deepseek.com/chat/completions"
             : "https://api.openai.com/v1/chat/completions";
         var model = provider == "DeepSeek" ? Plugin.DeepSeekModel.Value.Trim() : Plugin.OpenAiModel.Value.Trim();
         var key = provider == "DeepSeek" ? Plugin.DeepSeekApiKey.Value.Trim() : Plugin.OpenAiApiKey.Value.Trim();
-        var messages = BuildOpenAiMessages(systemInstruction);
+        var messages = BuildMessages(systemInstruction);
         var payload = new { model, messages, max_tokens = 1024, temperature = 0.8 };
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", key);
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        using var response = await Http.SendAsync(request).ConfigureAwait(false);
+        using var response = await AiHttp.Client.SendAsync(request).ConfigureAwait(false);
         var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
             throw new HttpRequestException($"{provider} HTTP {(int)response.StatusCode}: {responseBody}");
@@ -32,17 +33,14 @@ internal static partial class DialogueManagerUpdatePatch
             usageSummary = $"prompt={prompt}, output={output}";
         }
         Plugin.PluginLog.LogInfo($"{provider} completed: finish={finishReason}, rawChars={rawReply.Length}, {usageSummary}.");
-        CompleteAiReply(rawReply, userText, poseContext, japaneseVoiceMode);
+        completeReply(rawReply, userText, poseContext, japaneseVoiceMode);
     }
 
-    private static object[] BuildOpenAiMessages(string systemInstruction)
+    private static object[] BuildMessages(string systemInstruction)
     {
         var messages = new List<object> { new { role = "system", content = systemInstruction } };
-        lock (MemoryLock)
-        {
-            foreach (var turn in RecentConversation)
-                messages.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text });
-        }
+        ChatMemory.ForEach(turn =>
+            messages.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text }));
         return messages.ToArray();
     }
 }

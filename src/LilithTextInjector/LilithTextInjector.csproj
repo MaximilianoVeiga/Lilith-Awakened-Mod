@@ -4,7 +4,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>LilithTextInjector</AssemblyName>
-    <GameInterop>C:\Program Files (x86)\Steam\steamapps\common\The NOexistenceN of Lilith\BepInEx\interop</GameInterop>
+    <GameInterop Condition="'$(GameInterop)' == ''">C:\Program Files (x86)\Steam\steamapps\common\The NOexistenceN of Lilith\BepInEx\interop</GameInterop>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>none</DebugType>

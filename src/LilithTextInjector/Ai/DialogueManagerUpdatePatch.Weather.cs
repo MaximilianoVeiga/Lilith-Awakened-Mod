@@ -16,7 +16,7 @@ internal static partial class DialogueManagerUpdatePatch
             var latitude = Plugin.WeatherLatitude.Value.ToString(CultureInfo.InvariantCulture);
             var longitude = Plugin.WeatherLongitude.Value.ToString(CultureInfo.InvariantCulture);
             var url = $"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day&temperature_unit=celsius&wind_speed_unit=kmh&precipitation_unit=mm&timezone=auto";
-            using var response = await Http.GetAsync(url).ConfigureAwait(false);
+            using var response = await AiHttp.Client.GetAsync(url).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
             var current = document.RootElement.GetProperty("current");
@@ -48,7 +48,7 @@ internal static partial class DialogueManagerUpdatePatch
         try
         {
             const string url = "https://ipwho.is/?fields=success,message,city,region,country,latitude,longitude";
-            using var response = await Http.GetAsync(url).ConfigureAwait(false);
+            using var response = await AiHttp.Client.GetAsync(url).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
             var root = document.RootElement;
