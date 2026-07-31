@@ -1,26 +1,16 @@
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Text;
+namespace LilithModInstaller;
 
-namespace LilithVoiceHost;
-
-internal static class Program
+// Runs the bundled GPT-SoVITS services when the installer is launched with
+// --voice-host. Mirrors src/LilithVoiceHost/Program.cs; keep the two in sync.
+internal static class VoiceHost
 {
-    private static readonly SemaphoreSlim LogLock = new(1, 1);
-
-    private static async Task Main(string[] args)
+    internal static async Task RunAsync(int parentPid)
     {
-        var parentPid = 0;
-        var index = Array.FindIndex(args, value => string.Equals(value, "--parent", StringComparison.OrdinalIgnoreCase));
-        if (index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], out var parsed))
-            parentPid = parsed;
         using var mutex = new Mutex(true, "Local\\LilithAIVoiceHost", out var created);
         if (!created) return;
-
         var root = AppContext.BaseDirectory;
-        var logDirectory = Path.Combine(root, "logs");
-        Directory.CreateDirectory(logDirectory);
-        var log = Path.Combine(logDirectory, "voice-host.log");
+        Directory.CreateDirectory(Path.Combine(root, "logs"));
+        var log = Path.Combine(root, "logs", "voice-host.log");
         var owned = new List<Process>();
         try
         {
@@ -83,7 +73,7 @@ internal static class Program
         }
     }
 
-    private static bool HasNvidiaGpu()
+    internal static bool HasNvidiaGpu()
     {
         foreach (var candidate in new[]
                  {
@@ -97,8 +87,8 @@ internal static class Program
                 {
                     UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
                 });
-                if (process != null && process.WaitForExit(3000) && process.ExitCode == 0
-                    && process.StandardOutput.ReadToEnd().Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
+                if (process == null) continue;
+                if (process.WaitForExit(3000) && process.ExitCode == 0 && process.StandardOutput.ReadToEnd().Contains("NVIDIA", StringComparison.OrdinalIgnoreCase))
                     return true;
             }
             catch { }
@@ -118,6 +108,7 @@ internal static class Program
         catch { return false; }
     }
 
+    private static readonly SemaphoreSlim LogLock = new(1, 1);
     private static async Task LogAsync(string path, string message)
     {
         await LogLock.WaitAsync();

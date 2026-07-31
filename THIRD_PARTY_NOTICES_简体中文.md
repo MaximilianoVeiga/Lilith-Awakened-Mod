@@ -1,5 +1,7 @@
 # 第三方组件与许可声明
 
+[English](THIRD_PARTY_NOTICES.md) · **简体中文**
+
 本候选版本包含、重新分发或可与下列第三方项目配合运行：
 
 * [BepInEx 6.0.0-be.780 IL2CPP](https://github.com/BepInEx/BepInEx)
@@ -40,7 +42,7 @@
 
 如适用的开源许可要求提供对应源代码、修改内容、构建脚本、重新链接方式或其他材料，使用者可通过以下位置取得：
 
-源代码 / 对应源代码：https://github.com/mimimi6666/Lilith-AI-Mod
+源代码 / 对应源代码：https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod
 版本或提交编号：v0.1.1-rc4
 联系方式：**[mimimi5206666@gmail.com]**
 

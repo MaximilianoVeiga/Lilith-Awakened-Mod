@@ -1,1 +1,1 @@
-README image assets for Lilith AI MOD.
+README image assets for Lilith Awakened Mod.

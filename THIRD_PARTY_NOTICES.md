@@ -1,5 +1,7 @@
 # Third-Party Components and License Notice
 
+**English** · [简体中文](THIRD_PARTY_NOTICES_简体中文.md)
+
 This release candidate includes, redistributes, or is capable of interoperating with the following third-party projects:
 
 * [BepInEx 6.0.0-be.780 IL2CPP](https://github.com/BepInEx/BepInEx)
@@ -40,7 +42,7 @@ Any modification, packaging, configuration, or integration performed by this MOD
 
 Where an applicable open-source license requires the provision of corresponding source code, modifications, build scripts, relinking information, or other materials, users may obtain them from the following location:
 
-Source code / Corresponding source: https://github.com/mimimi6666/Lilith-AI-Mod
+Source code / Corresponding source: https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod
 Version or commit identifier: v0.1.1-rc4
 Contact: **[mimimi5206666@gmail.com]**
 

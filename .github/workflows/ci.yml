@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  lint:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Lint
+        shell: pwsh
+        run: ./scripts/lint.ps1 -AllowSkipInjector
+
+  build-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish installer
+        shell: pwsh
+        run: |
+          dotnet publish src/LilithModInstaller/LilithModInstaller.csproj `
+            -c Release `
+            -o artifacts/installer `
+            --nologo
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: LilithAI-Mod-Setup
+          path: artifacts/installer/LilithAI-Mod-Setup.exe
+          if-no-files-found: error
