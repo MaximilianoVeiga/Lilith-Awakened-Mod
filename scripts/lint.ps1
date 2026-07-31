@@ -20,6 +20,8 @@ $projects = @(
 
 $gameInterop = if ($env:GameInterop) {
     $env:GameInterop
+} elseif (Test-Path (Join-Path $repoRoot "release-assets\game-interop\Assembly-CSharp.dll")) {
+    Join-Path $repoRoot "release-assets\game-interop"
 } else {
     "C:\Program Files (x86)\Steam\steamapps\common\The NOexistenceN of Lilith\BepInEx\interop"
 }

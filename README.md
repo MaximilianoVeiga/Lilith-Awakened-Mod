@@ -6,7 +6,7 @@
 
 🍓 Unofficial Community MOD 🍓
 
-[![Version](https://img.shields.io/badge/version-0.1.1--RC4-ff69b4?style=flat-square)](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases)
+[![Version](https://img.shields.io/badge/version-0.1.1--RC6-ff69b4?style=flat-square)](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d6?style=flat-square)
 ![Providers](https://img.shields.io/badge/AI-Gemini%20%C2%B7%20Qwen%20%C2%B7%20OpenAI%20%C2%B7%20DeepSeek-8a2be2?style=flat-square)
 [![Discord](https://img.shields.io/badge/Discord-join-5865f2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/JGAHnxjbj)
@@ -23,14 +23,11 @@ This unofficial AI extension for *The NOexistenceN of Lilith* keeps Lilith's qui
 
 > “Will you stay and talk with me today?”
 
-## What's new in 0.1.1-RC4
+## What's new in 0.1.1-RC6
 
-- Startup stages are isolated, so one incompatible optional hook no longer blocks the rest of the MOD from loading. Errors are written to `BepInEx/LogOutput.log`.
-- The installer retries transient file locks, reports the exact failing path, and verifies BepInEx plus the MOD DLL after extraction.
-- Fixed voice-button desync after restart or opening settings, and being unable to switch back to Chinese after selecting Japanese. Both language choices now persist correctly.
-- The local voice host starts only the selected language service, restarts cleanly on language changes, and supports the voice callback in official Build `24275097`.
-- Qwen realtime speech recognition uses the configured realtime model; HTTP fallback still uses the regular ASR model.
-- Known legacy mojibake defaults are migrated without overwriting player-customized prompts or settings.
+- Voice line pack downloads from [Lilith-Awakened-Assets `v1.0.0`](https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/releases/tag/v1.0.0) (`voice-pack.zip`) instead of being mirrored in this repository.
+- Release CI builds `core.zip` + `voice-runtime.zip` here; the installer still resolves packages via `release-manifest.json`, and may fetch the voice pack from the Assets release origin.
+- Small build inputs (`release-assets/core-voice`, `unity-libs`, voice-runtime configs) stay in this repo as normal Git files — no Git LFS (public forks cannot upload LFS objects).
 
 ## What can she do?
 
@@ -53,7 +50,7 @@ This unofficial AI extension for *The NOexistenceN of Lilith* keeps Lilith's qui
 
 ## AI provider compatibility
 
-> **Gemini remains the recommended and most thoroughly tested provider in 0.1.1-RC4.** Qwen has been tested for chat, speech recognition, web search, and explicit local commands. OpenAI and DeepSeek remain experimental text-chat compatibility layers.
+> **Gemini remains the recommended and most thoroughly tested provider in 0.1.1-RC6.** Qwen has been tested for chat, speech recognition, web search, and explicit local commands. OpenAI and DeepSeek remain experimental text-chat compatibility layers.
 
 | Feature | Gemini | Qwen | OpenAI / DeepSeek |
 |---|---|---|---|
@@ -73,7 +70,7 @@ Local GPT-SoVITS can speak a successfully returned text reply, so OpenAI/DeepSee
 - **[Google Drive full package mirror](https://drive.google.com/file/d/1UxynMsGJrl0nuA5b3JS2YFTsfRVafIG4/view?usp=sharing)**
 - **[Baidu full package mirror](https://pan.baidu.com/s/1oYcX5PYBxKLvvMdi0cE8Uw?pwd=2u2c)** — extract code: `2u2c`
 
-Both links provide the complete RC4 package. The archive password is `I love you, Lilith.`. Extract all files, then run `LilithAI-Mod-Setup.exe` from the extracted folder.
+Both links provide the complete package when available. The archive password is `I love you, Lilith.`. Extract all files, then run `LilithAI-Mod-Setup.exe` from the extracted folder.
 
 > **Do not install the MOD through `Code → Download ZIP`.** That download is source code, not the installable release.
 
@@ -82,19 +79,51 @@ Both links provide the complete RC4 package. The archive password is `I love you
 [GitHub Release](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases) assets are listed flat, but the installer expects local packages inside a `packages` subfolder. If you download the assets manually, arrange them like this:
 
 ```text
-Lilith-Awakened-Mod-0.1.1-RC4
+Lilith-Awakened-Mod-0.1.1-RC6
 ├─ LilithAI-Mod-Setup.exe
 ├─ release-manifest.json
 ├─ SHA256SUMS.txt
 └─ packages
-   ├─ core.zip
-   ├─ voice-pack.zip
-   └─ voice-runtime.zip
+    ├─ core.zip
+    ├─ voice-pack.zip      # optional local cache; otherwise downloaded from Assets
+    └─ voice-runtime.zip
 ```
 
-Pushing a `v*` tag runs the Release workflow: it publishes `LilithAI-Mod-Setup.exe` and automatically generates `release-manifest.json` and `SHA256SUMS.txt`. Unchanged large packages are reused from earlier tags via `release-packages.json`; new zips placed under `packages/` are hashed and uploaded with that release.
+Pushing a `v*` tag runs the Release workflow: it builds `core.zip` and `voice-runtime.zip` via `scripts/pack-release-packages.ps1`, publishes `LilithAI-Mod-Setup.exe`, and generates `release-manifest.json` / `SHA256SUMS.txt`. The voice pack URL is pinned to Assets `v1.0.0` in `release-packages.json`.
 
-If you download only the EXE, the installer retrieves the latest release manifest and missing packages automatically. The unchanged supplemental voice pack is reused from RC1; the updated voice runtime comes from the RC4 release. If networking, regional limits, or large-file downloads fail, use the Google Drive or Baidu full package above.
+If you download only the EXE, the installer retrieves the latest release manifest and missing packages automatically (Mod release for core / voice-runtime; Assets release for the voice pack). If networking, regional limits, or large-file downloads fail, use the Google Drive or Baidu full package above.
+
+### Building release packages (maintainers)
+
+Prerequisites:
+
+- .NET 8 SDK (and .NET 6 targeting pack to build the injector)
+- Game `BepInEx/interop` DLLs in `release-assets/game-interop/`, or `GameInterop` set to that folder (required to compile `LilithTextInjector`; otherwise the pack script can fall back to a local `references/core` plugin DLL)
+- Network access to download [Lilith-Awakened-Assets `v1.0.0`](https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/releases/tag/v1.0.0) (`lilith-voice-assets.zip` for models; installer users get `voice-pack.zip` directly)
+
+```powershell
+./scripts/pack-release-packages.ps1 -SkipVoicePack
+```
+
+This downloads pinned BepInEx be.780, uv 0.11.14, GPT-SoVITS pretrained weights, and Lilith voice models from the Assets release (or reuses `artifacts/cache/` / a local sibling assets checkout when present), then writes:
+
+```text
+packages/
+  core.zip
+  voice-runtime.zip
+```
+
+Optional switches: `-SkipCore`, `-SkipVoicePack`, `-SkipVoiceRuntime`. Optional env: `VOICE_ASSETS_TAG` (default `v1.0.0`), `VOICE_ASSETS_URL` (default combined release zip), `VOICE_PACK_URL` + `VOICE_MODELS_URL`, `RELEASE_ASSETS_URL`, `BEPINEX_ZIP_URL`, `SEVEN_ZIP_EXE`.
+
+| Payload | Source |
+|---|---|
+| Voice line pack (`voice-pack.zip`) | [Assets `v1.0.0`](https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/releases/download/v1.0.0/voice-pack.zip) |
+| Lilith TTS models | Assets `lilith-voice-assets.zip` / `voice-models.zip` (baked into `voice-runtime.zip` at pack time) |
+| Small reference WAVs + Unity libs | This repo under `release-assets/` |
+
+Zips use **smart compression**: 7-Zip ultra Deflate (`-mx=9`) when `7z` is available (Release CI installs it); otherwise .NET `SmallestSize` Deflate. Output remains standard ZIP for the installer.
+
+Then push a `v*` tag so the Release workflow uploads the freshly packed Mod packages with the installer.
 
 ### Install steps
 
@@ -200,6 +229,6 @@ Contact: **mimimi5206666@gmail.com**
 
 ### ✦ “If you're willing, I'll stay a little longer.” ✦
 
-**Version 0.1.1-RC4 · Publisher: MIMI**
+**Version 0.1.1-RC6 · Publisher: MIMI**
 
 </div>

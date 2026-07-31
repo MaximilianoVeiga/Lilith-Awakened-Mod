@@ -1,23 +1,20 @@
-# Lilith Awakened Mod 0.1.1 RC4
+﻿# Lilith Awakened Mod 0.1.1 RC6
 
 [Home (English)](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · **Português (BR)**
 
 Este é um MOD comunitário não oficial para o jogo de companhia de desktop *The NOexistenceN of Lilith*. Ele adiciona conversas com IA, entrada por texto e por voz, saída de voz em chinês e japonês, falas para diálogos que antes não tinham dublagem, recursos de clima e controles locais do computador previamente revisados.
 
-## Atualização RC4
+## Atualização RC6
 
-* Compatibilidade com a interface de configurações por categorias da Build oficial `24273498`.
-* Os controles do MOD agora aparecem apenas na aba **Controles** e não se sobrepõem mais a outras páginas de configuração.
-* Corrigidos o F6/F7 que funcionava apenas uma vez, o remapeamento de teclas e o cancelamento com Esc.
-* A seleção de vozes nativas e suplementares em chinês e japonês continua totalmente separada.
-* Adicionados o chat e o reconhecimento de fala do Qwen já testados, a busca na web nativa do provedor e o roteamento local confiável para comandos explícitos de computador.
-* Os aplicativos instalados agora podem ser identificados a partir de processos em execução, apps do Menu Iniciar do Windows, registros da Store/MSIX e atalhos, sem caminhos fixos do jogador.
-* Corrigido o problema em que as janelas de chave de API retinham o foco do mouse e do teclado, e a janela nativa de resgate de códigos foi mantida separada da inserção da chave de API.
-* O instalador pode, opcionalmente, mesclar a ponte Lilith Codex com privacidade minimizada aos Codex Hooks existentes, sem substituir hooks não relacionados.
+* Capturas de tela dos controles avançados do PC usam captura GDI nativa e salvam como `.bmp` em `Pictures\Lilith Screenshots`, evitando caminhos frágeis de PowerShell / `CopyFromScreen`.
+* A abertura de aplicativos resolve com mais confiabilidade atalhos do Menu Iniciar e da Área de Trabalho (`.lnk` / `.url`) e abre o atalho diretamente.
+* O instalador é compatível com DPI, tem layout mais claro e baixa apenas a partir da origem GitHub do Lilith-Awakened-Mod via o `release-manifest.json` mais recente.
+* Ao enviar uma tag `v*`, o workflow gera `core.zip`, `voice-pack.zip` e `voice-runtime.zip`, publica o EXE de instalação e cria `release-manifest.json` e `SHA256SUMS.txt` (veja `scripts/pack-release-packages.ps1` e `release-assets/`).
+* Marca e documentação do projeto: nome Lilith Awakened Mod, convite do Discord e README em Português (BR).
 
 ## Compatibilidade de provedores de IA
 
-**O Gemini continua sendo o provedor recomendado e mais amplamente otimizado na versão 0.1.1-RC4.** O comportamento da personagem, o tratamento de contexto, a saída multilíngue, a separação entre texto exibido e voz em japonês, o embasamento via Google Search, as cartas da IA e as ferramentas de computador em linguagem natural foram desenvolvidos principalmente em torno da API do Gemini.
+**O Gemini continua sendo o provedor recomendado e mais amplamente otimizado na versão 0.1.1-RC6.** O comportamento da personagem, o tratamento de contexto, a saída multilíngue, a separação entre texto exibido e voz em japonês, o embasamento via Google Search, as cartas da IA e as ferramentas de computador em linguagem natural foram desenvolvidos principalmente em torno da API do Gemini.
 
 O Qwen agora conta com uma integração testada, usando `qwen3.7-plus` para conversas e `qwen3-asr-flash` para reconhecimento de fala. Ele oferece busca na web nativa do provedor para informações atuais e roteamento local determinístico para comandos explícitos de aplicativos, mídia, capturas de tela e controles de computador revisados. A disponibilidade, a cota gratuita e as exigências de cobrança dependem da conta do jogador no Alibaba Cloud Model Studio e da região.
 
@@ -116,5 +113,5 @@ Contato: **[mimimi5206666@gmail.com]**
 Ao receber uma notificação específica e verificável relacionada a direitos, o criador analisará prontamente a questão e, quando apropriado, suspenderá a distribuição, removerá ou modificará o conteúdo em questão.
 
 **Publicado por:** MIMI  
-**Versão:** 0.1.1-RC4  
-**Data de lançamento:** 18 de julho de 2026
+**Versão:** 0.1.1-RC6  
+**Data de lançamento:** 30 de julho de 2026

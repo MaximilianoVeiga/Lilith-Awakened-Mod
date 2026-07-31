@@ -1,23 +1,20 @@
-# Lilith Awakened Mod 0.1.1 RC4
+﻿# Lilith Awakened Mod 0.1.1 RC6
 
 [Home (English)](README.md) · [繁體中文](README_繁體中文.md) · **简体中文** · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
 
 这是《The NOexistenceN of Lilith》桌宠的非官方社区 MOD，加入 AI 对话、文字与语音输入、中日文语音、无配音台词补音、天气查询和受限制的本机电脑操作。
 
-## RC4 更新
+## RC6 更新
 
-- 兼容官方 Build `24273498` 的分类设置界面。
-- MOD 设置只在“控制”分页显示，不再覆盖其他设置。
-- 修复 F6／F7 第二次无法触发，以及按键重新绑定与 Esc 取消失效。
-- 中文／日文内置与补充语音切换继续保持相互独立。
-- 加入已测试的千问聊天与语音识别、服务商原生联网搜索，以及明确电脑指令的本机可靠路由。
-- 应用启动可从运行中程序、Windows 开始菜单、Store／MSIX 注册与快捷方式解析，不写死玩家路径。
-- 修复 API Key 窗口残留鼠标／键盘焦点，并将原生权益兑换与 API Key 输入完全分离。
-- 安装程序可选将隐私最小化的莉莉丝 Codex 桥接合并到现有 Hooks，不覆盖其他 Hooks。
+- 高级电脑操作的截图改为原生 GDI 捕获，并以 `.bmp` 保存到 `Pictures\Lilith Screenshots`，不再依赖脆弱的 PowerShell／`CopyFromScreen`。
+- 打开应用改为更可靠地解析 Windows 开始菜单与桌面快捷方式（`.lnk`／`.url`），并直接打开快捷方式。
+- 安装程序支持 DPI 感知与更清晰的布局，并仅允许从 Lilith-Awakened-Mod 的 GitHub 发布来源，通过最新 `release-manifest.json` 下载。
+- 推送 `v*` 标签会构建 `core.zip`、`voice-pack.zip`、`voice-runtime.zip`，发布安装 EXE，并生成 `release-manifest.json` 与 `SHA256SUMS.txt`（见 `scripts/pack-release-packages.ps1` 与 `release-assets/`）。
+- 项目品牌与文档：Lilith Awakened Mod 命名、Discord 邀请链接，以及 Português (BR) README。
 
 ## AI 服务兼容性
 
-**目前仍推荐优先使用 Gemini；它是 0.1.1-RC4 测试最完整、针对性优化最多的服务。** 角色人格、上下文、多语言输出、日文显示／语音分离、Google Search、AI 信件和自然语言电脑工具，均主要以 Gemini API 开发。
+**目前仍推荐优先使用 Gemini；它是 0.1.1-RC6 测试最完整、针对性优化最多的服务。** 角色人格、上下文、多语言输出、日文显示／语音分离、Google Search、AI 信件和自然语言电脑工具，均主要以 Gemini API 开发。
 
 千问已经完成实际接入测试，默认使用 `qwen3.7-plus` 聊天、`qwen3-asr-flash` 识别语音，并支持服务商原生联网搜索以及明确应用、媒体、截图和受审核电脑指令的本机路由。可用性、免费额度和计费要求取决于玩家的阿里云模型服务账户与地区。
 
@@ -83,5 +80,5 @@ OpenAI 与 DeepSeek 目前仅提供**实验性的文字聊天兼容层**。基�
 作者收到具体且可验证的权利通知后，将及时核实，并视情况停止提供、删除或调整相关内容。
 
 **发布者：** 米米  
-**版本：** 0.1.1-RC4  
-**发布日期：** 2026/7/18
+**版本：** 0.1.1-RC6
+**发布日期：** 2026/7/30

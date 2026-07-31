@@ -1,4 +1,4 @@
-# Lilith Awakened Mod 0.1.1 RC4
+﻿# Lilith Awakened Mod 0.1.1 RC6
 
 [Home (English)](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · **English (detailed)** · [Português (BR)](README_pt-BR.md)
 
@@ -6,24 +6,17 @@ This is an unofficial community MOD for the desktop companion game *The NOexiste
 
 For a shorter overview with download links and screenshots, see the [project home README](README.md).
 
-## RC4 Update
+## RC6 Update
 
-* Startup stages are isolated so one incompatible optional hook no longer prevents the remaining MOD features from loading; errors are written to `BepInEx/LogOutput.log`.
-* The installer retries transient file locks, reports the exact failing path, and verifies BepInEx plus the MOD DLL after extraction.
-* Fixed voice-button desynchronization after restart or opening settings, and being unable to switch back to Chinese after selecting Japanese; both language choices now persist correctly.
-* The local voice host starts only the selected language service, restarts cleanly on language changes, and supports the voice callback in official Build `24275097`.
-* Qwen realtime speech recognition uses the configured realtime model; HTTP fallback keeps the regular ASR model.
-* Known legacy mojibake defaults are migrated without overwriting player-customized prompts or settings.
-* Added compatibility with the categorized settings interface in official Build `24273498`; MOD controls appear only on the **Controls** tab.
-* Fixed F6/F7 working only once, keyboard rebinding, and Esc cancellation.
-* Added tested Qwen chat and speech recognition, provider-native web search, and reliable local routing for explicit computer commands.
-* Installed applications can be resolved from running processes, Windows Start apps, Store/MSIX registrations, and shortcuts without hard-coded player paths.
-* Fixed API-key dialogs retaining mouse/keyboard focus and kept the native entitlement redemption window separate from API-key entry.
-* The installer can optionally merge the privacy-minimized Lilith Codex bridge into existing Codex Hooks without replacing unrelated hooks.
+* Advanced PC screenshots use native GDI capture and save as `.bmp` under `Pictures\Lilith Screenshots`, avoiding fragile PowerShell / `CopyFromScreen` paths.
+* App launching resolves Windows Start Menu and Desktop shortcuts (`.lnk` / `.url`) more reliably, then opens the shortcut directly.
+* The installer is DPI-aware with a clearer layout, and downloads packages via `release-manifest.json` (Mod releases for core/voice-runtime; Lilith-Awakened-Assets for the voice pack).
+* Pushing a `v*` tag builds `core.zip` and `voice-runtime.zip` (voice pack is pinned to Lilith-Awakened-Assets `v1.0.0`), publishes the setup EXE, and generates `release-manifest.json` plus `SHA256SUMS.txt` (see `scripts/pack-release-packages.ps1` and `release-assets/`).
+* Project branding and docs: Lilith Awakened Mod naming, Discord invite, and a Português (BR) README.
 
 ## AI Provider Compatibility
 
-**Gemini remains the recommended and most extensively optimized provider for version 0.1.1-RC4.** Personality behavior, context handling, multilingual output, Japanese display/voice separation, Google Search grounding, AI letters, and natural-language computer tools were primarily developed around the Gemini API.
+**Gemini remains the recommended and most extensively optimized provider for version 0.1.1-RC6.** Personality behavior, context handling, multilingual output, Japanese display/voice separation, Google Search grounding, AI letters, and natural-language computer tools were primarily developed around the Gemini API.
 
 Qwen now has a tested integration using `qwen3.7-plus` for chat and `qwen3-asr-flash` for speech recognition. It supports provider-native web search for current information and deterministic local routing for explicit application, media, screenshot, and reviewed computer-control commands. Availability, free quota, and billing requirements depend on the player’s Alibaba Cloud Model Studio account and region.
 
@@ -122,5 +115,5 @@ Contact: **[mimimi5206666@gmail.com]**
 Upon receiving a specific and verifiable rights-related notice, the creator will promptly review the matter and, where appropriate, suspend distribution, remove, or modify the relevant content.
 
 **Publisher:** MIMI  
-**Version:** 0.1.1-RC4  
-**Release Date:** July 18, 2026
+**Version:** 0.1.1-RC6  
+**Release Date:** July 30, 2026

@@ -4,6 +4,8 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>LilithTextInjector</AssemblyName>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..'))</RepoRoot>
+    <GameInterop Condition="'$(GameInterop)' == '' and Exists('$(RepoRoot)\release-assets\game-interop\Assembly-CSharp.dll')">$(RepoRoot)\release-assets\game-interop</GameInterop>
     <GameInterop Condition="'$(GameInterop)' == ''">C:\Program Files (x86)\Steam\steamapps\common\The NOexistenceN of Lilith\BepInEx\interop</GameInterop>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

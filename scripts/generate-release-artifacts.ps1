@@ -122,12 +122,21 @@ foreach ($entry in $config.packages.PSObject.Properties) {
     $localPath = Join-Path $PackagesDir $fileName
     $package = $null
 
-    if (Test-Path -LiteralPath $localPath) {
+    if ($spec.url -and $spec.sha256 -and ($null -ne $spec.bytes) -and ([string]$spec.url -notlike "$releaseBase/*")) {
+        $package = [ordered]@{
+            file   = $fileName
+            url    = [string]$spec.url
+            sha256 = ([string]$spec.sha256).ToUpperInvariant()
+            bytes  = [int64]$spec.bytes
+        }
+        Write-Host "Using external package URL for '$name': $($package.url)"
+    }
+    elseif (Test-Path -LiteralPath $localPath) {
         $sha = Get-Sha256Lower $localPath
         $bytes = (Get-Item -LiteralPath $localPath).Length
         $package = [ordered]@{
             file   = $fileName
-            url    = "$releaseBase/$tag/$fileName"
+            url    = if ($spec.url) { [string]$spec.url } else { "$releaseBase/$tag/$fileName" }
             sha256 = $sha.ToUpperInvariant()
             bytes  = $bytes
         }
@@ -156,8 +165,8 @@ foreach ($entry in $config.packages.PSObject.Properties) {
     }
     else {
         throw @"
-Package '$name' ($fileName) was not found in '$PackagesDir' and has no reuseFromTag.
-Place the zip under packages/ or set reuseFromTag in release-packages.json.
+Package '$name' ($fileName) was not found in '$PackagesDir' and has no url+sha256+bytes or reuseFromTag.
+Place the zip under packages/, pin an external URL in release-packages.json, or set reuseFromTag.
 "@
     }
 

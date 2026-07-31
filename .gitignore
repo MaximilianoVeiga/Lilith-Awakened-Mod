@@ -16,3 +16,13 @@ LilithAI-Mod-Setup.exe
 packages/
 *.zip
 artifacts/
+references/
+
+# Nested assets git repo (voice-pack + Lilith models)
+Lilith-Awakened-Assets/
+
+# Local BepInEx refs used only for building the injector (populated by pack script)
+src/bepinex-be780/
+# Upstream Unity player zip (extract DLLs only; do not commit)
+release-assets/unity-libs/*.zip
+

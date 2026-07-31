@@ -4,7 +4,11 @@ namespace LilithModInstaller;
 internal sealed partial class InstallerForm : Form
 {
     private const string AppId = "4643090";
-    private const string AllowedReleaseOrigin = "https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/";
+    private static readonly string[] AllowedReleaseOrigins =
+    [
+        "https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/",
+        "https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/"
+    ];
     private const string DefaultManifestUrl = "https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases/latest/download/release-manifest.json";
     private const int ContentMargin = 28;
     private const int ContentWidth = 764;
@@ -214,10 +218,11 @@ internal sealed partial class InstallerForm : Form
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
             || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
-            || !uri.AbsoluteUri.StartsWith(AllowedReleaseOrigin, StringComparison.OrdinalIgnoreCase))
+            || !AllowedReleaseOrigins.Any(origin =>
+                uri.AbsoluteUri.StartsWith(origin, StringComparison.OrdinalIgnoreCase)))
         {
             throw new InvalidOperationException(
-                "Download URLs must come from https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/.");
+                "Download URLs must come from Lilith-Awakened-Mod or Lilith-Awakened-Assets GitHub releases.");
         }
     }
 

@@ -3,7 +3,7 @@ namespace LilithModInstaller;
 // Release and installed-state manifest models.
 internal sealed class ReleaseManifest
 {
-    public string Version { get; set; } = "0.1.1-rc2";
+    public string Version { get; set; } = "0.1.1-rc6";
     public Dictionary<string, PackageSpec> Packages { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 

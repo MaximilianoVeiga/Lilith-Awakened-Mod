@@ -1,0 +1,4 @@
+# Small Lilith-only release blobs stay in this repo as normal Git files
+# (no Git LFS - public forks cannot upload LFS objects).
+# Large voice packs and Lilith TTS models are downloaded from:
+# https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/releases

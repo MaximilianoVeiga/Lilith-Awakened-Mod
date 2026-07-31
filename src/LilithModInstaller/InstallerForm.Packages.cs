@@ -50,7 +50,8 @@ internal sealed partial class InstallerForm
         foreach (var entry in zip.Entries)
         {
             if (string.IsNullOrEmpty(entry.Name)) continue;
-            var destination = Path.GetFullPath(Path.Combine(game, entry.FullName.Replace('/', Path.DirectorySeparatorChar)));
+            var relative = NormalizePackageEntryPath(entry.FullName);
+            var destination = Path.GetFullPath(Path.Combine(game, relative.Replace('/', Path.DirectorySeparatorChar)));
             if (!destination.StartsWith(game + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Package contains an unsafe path.");
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
@@ -58,6 +59,23 @@ internal sealed partial class InstallerForm
             files.Add(Path.GetRelativePath(game, destination));
         }
         return files;
+    }
+
+    // Lilith-Awakened-Assets voice-pack.zip uses native-voice-pack/ at the zip root;
+    // Mod-built packages already nest under BepInEx/data/LilithTextInjector/.
+    private static string NormalizePackageEntryPath(string entryFullName)
+    {
+        var normalized = entryFullName.Replace('\\', '/').TrimStart('/');
+        if (normalized.StartsWith("BepInEx/", StringComparison.OrdinalIgnoreCase))
+            return normalized;
+        if (normalized.StartsWith("native-voice-pack/", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("native-voice-pack-ja/", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalized, "native-voice-pack", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalized, "native-voice-pack-ja", StringComparison.OrdinalIgnoreCase))
+        {
+            return "BepInEx/data/LilithTextInjector/" + normalized;
+        }
+        return normalized;
     }
 
     private async Task PrepareVoiceRuntimeAsync(string runtime)
