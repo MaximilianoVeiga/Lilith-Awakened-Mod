@@ -675,7 +675,8 @@ function Ensure-PretrainedModels([string]$GptRoot) {
         @{ Rel = "gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt"; Url = "$HfGptSoVits/gsv-v2final-pretrained/s1bert25hz-5kh-longer-epoch=12-step=369668.ckpt" },
         @{ Rel = "gsv-v2final-pretrained/s2D2333k.pth"; Url = "$HfGptSoVits/gsv-v2final-pretrained/s2D2333k.pth" },
         @{ Rel = "gsv-v2final-pretrained/s2G2333k.pth"; Url = "$HfGptSoVits/gsv-v2final-pretrained/s2G2333k.pth" },
-        @{ Rel = "fast_langdetect/lid.176.bin"; Url = "$HfGptSoVits/fast_langdetect/lid.176.bin" }
+        # Removed from lj1995/GPT-SoVITS HF mirror; use Facebook's public FastText lid model (same 131266198-byte blob).
+        @{ Rel = "fast_langdetect/lid.176.bin"; Url = "https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin" }
     )
 
     foreach ($f in $files) {
