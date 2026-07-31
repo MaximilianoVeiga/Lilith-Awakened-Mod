@@ -43,6 +43,7 @@ jobs:
           VOICE_PACK_URL: ${{ secrets.VOICE_PACK_URL }}
           VOICE_MODELS_URL: ${{ secrets.VOICE_MODELS_URL }}
           RELEASE_ASSETS_URL: ${{ secrets.RELEASE_ASSETS_URL }}
+          GAME_INTEROP_URL: ${{ secrets.GAME_INTEROP_URL }}
           BEPINEX_ZIP_URL: ${{ secrets.BEPINEX_ZIP_URL }}
         run: |
           # Models-only for voice-runtime; installer voice pack comes from Assets release URL.

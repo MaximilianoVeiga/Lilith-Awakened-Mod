@@ -461,9 +461,60 @@ function Get-GameInteropPath {
     if (Test-Path (Join-Path $fromAssets "Assembly-CSharp.dll")) {
         return $fromAssets
     }
+    if ($env:GAME_INTEROP_URL) {
+        Write-Step "Fetching game interop from GAME_INTEROP_URL"
+        $zip = Join-Path $CacheDir "game-interop.zip"
+        if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+        Get-CachedFile -Url $env:GAME_INTEROP_URL -OutFile $zip -OverrideUrl $env:GAME_INTEROP_URL
+        $extract = Join-Path $StagingDir "game-interop-remote"
+        Expand-ZipTo $zip $extract
+        $root = if (Test-Path (Join-Path $extract "Assembly-CSharp.dll")) {
+            $extract
+        }
+        elseif (Test-Path (Join-Path $extract "interop\Assembly-CSharp.dll")) {
+            Join-Path $extract "interop"
+        }
+        else {
+            $found = Get-ChildItem -LiteralPath $extract -Recurse -Filter "Assembly-CSharp.dll" | Select-Object -First 1
+            if (-not $found) {
+                throw "GAME_INTEROP_URL zip must contain Assembly-CSharp.dll"
+            }
+            $found.DirectoryName
+        }
+        Ensure-Dir $fromAssets
+        Copy-Item -Path (Join-Path $root "*") -Destination $fromAssets -Recurse -Force
+        if (Test-Path (Join-Path $fromAssets "Assembly-CSharp.dll")) {
+            return $fromAssets
+        }
+    }
     $steam = "C:\Program Files (x86)\Steam\steamapps\common\The NOexistenceN of Lilith\BepInEx\interop"
     if (Test-Path (Join-Path $steam "Assembly-CSharp.dll")) {
         return $steam
+    }
+    return $null
+}
+
+function Get-PrebuiltPluginDir {
+    $local = Join-Path $ReleaseAssetsDir "prebuilt-plugins"
+    if (Test-Path (Join-Path $local "LilithTextInjector.dll")) {
+        return $local
+    }
+    if ($env:PREBUILT_CORE_PLUGINS_URL) {
+        Write-Step "Fetching prebuilt core plugins from PREBUILT_CORE_PLUGINS_URL"
+        $zip = Join-Path $CacheDir "prebuilt-core-plugins.zip"
+        if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+        Get-CachedFile -Url $env:PREBUILT_CORE_PLUGINS_URL -OutFile $zip -OverrideUrl $env:PREBUILT_CORE_PLUGINS_URL
+        $extract = Join-Path $StagingDir "prebuilt-plugins-remote"
+        Expand-ZipTo $zip $extract
+        $dll = Get-ChildItem -LiteralPath $extract -Recurse -Filter "LilithTextInjector.dll" | Select-Object -First 1
+        if (-not $dll) {
+            throw "PREBUILT_CORE_PLUGINS_URL zip must contain LilithTextInjector.dll"
+        }
+        return $dll.DirectoryName
+    }
+    $refPlugins = Join-Path $repoRoot "references\core\BepInEx\plugins"
+    if (Test-Path (Join-Path $refPlugins "LilithTextInjector.dll")) {
+        return $refPlugins
     }
     return $null
 }
@@ -703,15 +754,15 @@ function Pack-Core {
         }
     }
     else {
-        if ($env:GITHUB_ACTIONS -eq "true" -or $env:CI -eq "true") {
-            throw "Game interop not found. Populate release-assets/game-interop with the game BepInEx/interop DLLs before packing in CI."
+        $prebuilt = Get-PrebuiltPluginDir
+        if (-not $prebuilt) {
+            throw "Game interop not found and no prebuilt plugins available. Populate release-assets/game-interop, set GAME_INTEROP_URL, or add release-assets/prebuilt-plugins/LilithTextInjector.dll."
         }
-        Write-Warning "Game interop not found; falling back to references/core plugin DLLs if present."
-        $refPlugins = Join-Path $repoRoot "references\core\BepInEx\plugins"
+        Write-Warning "Game interop not found; using prebuilt plugins from $prebuilt"
         foreach ($name in @("LilithTextInjector.dll", "NAudio.dll", "NAudio.Core.dll", "NAudio.Wasapi.dll")) {
-            $src = Join-Path $refPlugins $name
+            $src = Join-Path $prebuilt $name
             if (-not (Test-Path $src)) {
-                throw "Cannot build or find $name. Populate release-assets/game-interop or install the game interop, or provide references/core."
+                throw "Prebuilt plugin missing: $src"
             }
             Copy-Item -LiteralPath $src -Destination (Join-Path $plugins $name) -Force
         }

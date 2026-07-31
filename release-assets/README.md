@@ -9,8 +9,9 @@ Large voice packs and Lilith TTS models are **downloaded** from
 |---|---|---|
 | `core-voice/` | `core.zip` | Reference WAVs → `BepInEx/data/LilithTextInjector/voice/` |
 | `unity-libs/` | `core.zip` | Game Unity 2021.3.45 libs (not in upstream BepInEx zip) |
+| `prebuilt-plugins/` | `core.zip` | Fallback `LilithTextInjector` + NAudio when game interop is unavailable in CI |
 | `voice-runtime/` | `voice-runtime.zip` | `requirements-inference.txt` + `config/*.yaml` |
-| `game-interop/` | injector build | Game `BepInEx/interop` DLLs required to compile `LilithTextInjector` |
+| `game-interop/` | injector build | Optional; game `BepInEx/interop` DLLs (or `GAME_INTEROP_URL`) to compile from source |
 
 Do **not** commit `voice-pack/` or `voice-models/` here — the installer downloads
 [`voice-pack.zip`](https://github.com/MaximilianoVeiga/Lilith-Awakened-Assets/releases/download/v1.0.0/voice-pack.zip)
