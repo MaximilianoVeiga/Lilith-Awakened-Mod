@@ -71,7 +71,7 @@ internal sealed partial class InstallerForm
                 step++;
                 _progress.Value = Math.Min(90, (step - 1) * 80 / Math.Max(1, selections.Count));
                 var package = await AcquirePackageAsync(name);
-                SetStatus(string.Format(L("正在安裝 {0}…", "正在安装 {0}…", "{0} をインストール中…", "Installing {0}…"), name));
+                SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在安裝 {0}…", "正在安装 {0}…", "{0} をインストール中…", "Installing {0}…"), name));
                 installed.Files[name] = ExtractPackage(package, game);
             }
 
@@ -133,7 +133,7 @@ internal sealed partial class InstallerForm
         else
         {
             var nextSection = lines.FindIndex(sectionIndex + 1, line =>
-                line.TrimStart().StartsWith("[", StringComparison.Ordinal));
+                line.TrimStart().StartsWith('['));
             if (nextSection < 0) nextSection = lines.Count;
             var enabledIndex = -1;
             for (var index = sectionIndex + 1; index < nextSection; index++)

@@ -29,7 +29,7 @@ internal sealed partial class InstallerForm
                 await destination.WriteAsync(buffer.AsMemory(0, read));
                 received += read;
                 if (total > 0) _progress.Value = Math.Clamp((int)(received * 70 / total), 0, 70);
-                SetStatus(string.Format(L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
+                SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
             }
             File.Move(temporary, local, true);
         }

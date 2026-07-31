@@ -12,8 +12,8 @@ internal static class Program
     {
         var parentPid = 0;
         var index = Array.FindIndex(args, value => string.Equals(value, "--parent", StringComparison.OrdinalIgnoreCase));
-        if (index >= 0 && index + 1 < args.Length)
-            int.TryParse(args[index + 1], out parentPid);
+        if (index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], out var parsed))
+            parentPid = parsed;
         using var mutex = new Mutex(true, "Local\\LilithAIVoiceHost", out var created);
         if (!created) return;
 

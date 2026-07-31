@@ -10,8 +10,8 @@ internal static class Program
         {
             var parent = 0;
             var index = Array.FindIndex(args, value => string.Equals(value, "--parent", StringComparison.OrdinalIgnoreCase));
-            if (index >= 0 && index + 1 < args.Length)
-                int.TryParse(args[index + 1], out parent);
+            if (index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], out var parsed))
+                parent = parsed;
             VoiceHost.RunAsync(parent).GetAwaiter().GetResult();
             return;
         }
