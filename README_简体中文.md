@@ -1,4 +1,4 @@
-# 莉莉丝 AI MOD 0.1.1 RC4
+# Lilith Awakened Mod 0.1.1 RC4
 
 [Home (English)](README.md) · [繁體中文](README_繁體中文.md) · **简体中文** · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
 

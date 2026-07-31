@@ -1,12 +1,12 @@
 <div align="center">
 
-# ♡ Lilith AI MOD ♡
+# ♡ Lilith Awakened Mod ♡
 
 **Let Lilith hear you, remember you, and answer in her own voice.**
 
 🍓 Unofficial Community MOD 🍓
 
-[![Version](https://img.shields.io/badge/version-0.1.1--RC4-ff69b4?style=flat-square)](https://github.com/mimimi6666/Lilith-AI-Mod/releases)
+[![Version](https://img.shields.io/badge/version-0.1.1--RC4-ff69b4?style=flat-square)](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-0078d6?style=flat-square)
 ![Providers](https://img.shields.io/badge/AI-Gemini%20%C2%B7%20Qwen%20%C2%B7%20OpenAI%20%C2%B7%20DeepSeek-8a2be2?style=flat-square)
 [![Discord](https://img.shields.io/badge/Discord-join-5865f2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/JGAHnxjbj)
@@ -45,7 +45,7 @@ This unofficial AI extension for *The NOexistenceN of Lilith* keeps Lilith's qui
 
 <div align="center">
 
-<img src="docs/images/settings-and-voice-language.png" alt="Lilith AI MOD settings, key bindings, and Chinese or Japanese voice selection">
+<img src="docs/images/settings-and-voice-language.png" alt="Lilith Awakened Mod settings, key bindings, and Chinese or Japanese voice selection">
 
 <sub>Settings, rebindable controls, and Chinese / Japanese voice selection</sub>
 
@@ -79,10 +79,10 @@ Both links provide the complete RC4 package. The archive password is `I love you
 
 ### Manual GitHub Release download
 
-[GitHub Release](https://github.com/mimimi6666/Lilith-AI-Mod/releases) Assets are listed flat, but the RC4 installer expects local packages inside a `packages` subfolder. If you download the assets manually, arrange them like this:
+[GitHub Release](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases) Assets are listed flat, but the RC4 installer expects local packages inside a `packages` subfolder. If you download the assets manually, arrange them like this:
 
 ```text
-Lilith-AI-Mod-0.1.1-RC4
+Lilith-Awakened-Mod-0.1.1-RC4
 ├─ LilithAI-Mod-Setup.exe
 ├─ release-manifest.json
 ├─ SHA256SUMS.txt

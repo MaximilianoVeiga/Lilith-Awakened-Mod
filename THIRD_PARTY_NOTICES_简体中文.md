@@ -42,7 +42,7 @@
 
 如适用的开源许可要求提供对应源代码、修改内容、构建脚本、重新链接方式或其他材料，使用者可通过以下位置取得：
 
-源代码 / 对应源代码：https://github.com/mimimi6666/Lilith-AI-Mod
+源代码 / 对应源代码：https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod
 版本或提交编号：v0.1.1-rc4
 联系方式：**[mimimi5206666@gmail.com]**
 

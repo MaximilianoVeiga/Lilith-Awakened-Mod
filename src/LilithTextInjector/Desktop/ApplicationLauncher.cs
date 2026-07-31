@@ -430,54 +430,28 @@ internal static class ApplicationLauncher
             var discovered = new List<WindowsStartApplication>();
             try
             {
-                var startInfo = new ProcessStartInfo("powershell.exe")
+                var roots = new[]
                 {
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    StandardOutputEncoding = Encoding.UTF8
+                    Environment.GetFolderPath(Environment.SpecialFolder.CommonStartMenu),
+                    Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
+                    Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory),
+                    Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)
                 };
-                startInfo.ArgumentList.Add("-NoLogo");
-                startInfo.ArgumentList.Add("-NoProfile");
-                startInfo.ArgumentList.Add("-NonInteractive");
-                startInfo.ArgumentList.Add("-WindowStyle");
-                startInfo.ArgumentList.Add("Hidden");
-                startInfo.ArgumentList.Add("-Command");
-                startInfo.ArgumentList.Add("[Console]::OutputEncoding=[Text.UTF8Encoding]::new(); Get-StartApps | Select-Object Name,AppID | ConvertTo-Json -Compress");
-
-                using var process = Process.Start(startInfo);
-                if (process == null)
-                    return CachedWindowsStartApps.ToList();
-                var json = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                if (!process.WaitForExit(5000))
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var root in roots.Where(Directory.Exists))
                 {
-                    try { process.Kill(true); } catch { }
-                    Plugin.PluginLog.LogWarning("Timed out while enumerating Windows Start applications.");
-                    return CachedWindowsStartApps.ToList();
-                }
-                if (process.ExitCode != 0)
-                {
-                    Plugin.PluginLog.LogWarning($"Could not enumerate Windows Start applications: {error.Trim()}");
-                    return CachedWindowsStartApps.ToList();
-                }
-
-                using var document = JsonDocument.Parse(json);
-                var elements = document.RootElement.ValueKind == JsonValueKind.Array
-                    ? document.RootElement.EnumerateArray().ToArray()
-                    : new[] { document.RootElement };
-                foreach (var element in elements)
-                {
-                    if (!element.TryGetProperty("Name", out var nameProperty)
-                        || !element.TryGetProperty("AppID", out var idProperty))
-                        continue;
-                    var name = nameProperty.GetString()?.Trim() ?? string.Empty;
-                    var appId = idProperty.GetString()?.Trim() ?? string.Empty;
-                    if (name.Length == 0 || appId.Length == 0)
-                        continue;
-                    discovered.Add(new WindowsStartApplication { Name = name, AppId = appId });
+                    foreach (var pattern in new[] { "*.lnk", "*.url", "*.appref-ms" })
+                    {
+                        foreach (var shortcut in Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories))
+                        {
+                            var name = Path.GetFileNameWithoutExtension(shortcut);
+                            if (string.IsNullOrWhiteSpace(name)
+                                || Regex.IsMatch(name, "(uninstall|解除安裝|卸载|remove|readme|help|manual|website|web site)", RegexOptions.IgnoreCase)
+                                || !seen.Add(shortcut))
+                                continue;
+                            discovered.Add(new WindowsStartApplication { Name = name, ShortcutPath = shortcut });
+                        }
+                    }
                 }
             }
             catch (Exception exception)
@@ -496,14 +470,13 @@ internal static class ApplicationLauncher
 
     internal static bool TryLaunchWindowsStartApplication(WindowsStartApplication application)
     {
-        if (!OperatingSystem.IsWindows() || string.IsNullOrWhiteSpace(application.AppId))
+        if (!OperatingSystem.IsWindows() || string.IsNullOrWhiteSpace(application.ShortcutPath) || !File.Exists(application.ShortcutPath))
             return false;
-        var process = Process.Start(new ProcessStartInfo("explorer.exe")
+        var process = Process.Start(new ProcessStartInfo(application.ShortcutPath)
         {
-            Arguments = "shell:AppsFolder\\" + application.AppId,
             UseShellExecute = true
         });
-        Plugin.PluginLog.LogInfo($"Sent Windows Start application launch for '{application.Name}' ({application.AppId}).");
+        Plugin.PluginLog.LogInfo($"Launched Windows Start shortcut for '{application.Name}'.");
         return process != null;
     }
 
@@ -615,6 +588,6 @@ internal static class ApplicationLauncher
     internal sealed class WindowsStartApplication
     {
         public string Name { get; set; } = string.Empty;
-        public string AppId { get; set; } = string.Empty;
+        public string ShortcutPath { get; set; } = string.Empty;
     }
 }

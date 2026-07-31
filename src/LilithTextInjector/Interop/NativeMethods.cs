@@ -86,6 +86,158 @@ internal static class NativeMethods
     [DllImport("PowrProf.dll", SetLastError = true)]
     internal static extern bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent);
 
+    private const int SmXVirtualScreen = 76;
+    private const int SmYVirtualScreen = 77;
+    private const int SmCxVirtualScreen = 78;
+    private const int SmCyVirtualScreen = 79;
+    private const int SrcCopy = 0x00CC0020;
+    private const uint DibRgbColors = 0;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BitmapInfoHeader
+    {
+        public int Size;
+        public int Width;
+        public int Height;
+        public short Planes;
+        public short BitCount;
+        public int Compression;
+        public int SizeImage;
+        public int XPelsPerMeter;
+        public int YPelsPerMeter;
+        public int ClrUsed;
+        public int ClrImportant;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int index);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDC(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    private static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateCompatibleDC(IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateCompatibleBitmap(IntPtr hdc, int width, int height);
+
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr SelectObject(IntPtr hdc, IntPtr obj);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool BitBlt(IntPtr hdcDest, int xDest, int yDest, int width, int height, IntPtr hdcSrc, int xSrc, int ySrc, int rop);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteObject(IntPtr obj);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteDC(IntPtr hdc);
+
+    [DllImport("gdi32.dll")]
+    private static extern int GetDIBits(IntPtr hdc, IntPtr bitmap, uint startScan, uint scanLines, byte[]? bits, ref BitmapInfoHeader bmi, uint usage);
+
+    internal static void CaptureVirtualScreenToBmp(string outputPath)
+    {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("Screenshots are only available on Windows.");
+
+        var left = GetSystemMetrics(SmXVirtualScreen);
+        var top = GetSystemMetrics(SmYVirtualScreen);
+        var width = GetSystemMetrics(SmCxVirtualScreen);
+        var height = GetSystemMetrics(SmCyVirtualScreen);
+        if (width <= 0 || height <= 0)
+            throw new InvalidOperationException("Could not determine the virtual screen size.");
+
+        var screenDc = GetDC(IntPtr.Zero);
+        if (screenDc == IntPtr.Zero)
+            throw new InvalidOperationException("Could not open the screen device context.");
+
+        var memoryDc = IntPtr.Zero;
+        var bitmap = IntPtr.Zero;
+        var previous = IntPtr.Zero;
+        try
+        {
+            memoryDc = CreateCompatibleDC(screenDc);
+            if (memoryDc == IntPtr.Zero)
+                throw new InvalidOperationException("Could not create a compatible device context.");
+
+            bitmap = CreateCompatibleBitmap(screenDc, width, height);
+            if (bitmap == IntPtr.Zero)
+                throw new InvalidOperationException("Could not create a compatible bitmap.");
+
+            previous = SelectObject(memoryDc, bitmap);
+            if (!BitBlt(memoryDc, 0, 0, width, height, screenDc, left, top, SrcCopy))
+                throw new InvalidOperationException("BitBlt failed while capturing the screen.");
+
+            var header = new BitmapInfoHeader
+            {
+                Size = Marshal.SizeOf<BitmapInfoHeader>(),
+                Width = width,
+                Height = -height,
+                Planes = 1,
+                BitCount = 32,
+                Compression = 0
+            };
+            var stride = width * 4;
+            var pixels = new byte[stride * height];
+            if (GetDIBits(memoryDc, bitmap, 0, (uint)height, pixels, ref header, DibRgbColors) == 0)
+                throw new InvalidOperationException("GetDIBits failed while reading the screenshot.");
+
+            // Convert BGRA → BGR and write a 24-bit BMP (bottom-up).
+            var rowStride = ((width * 3) + 3) & ~3;
+            var pixelData = new byte[rowStride * height];
+            for (var y = 0; y < height; y++)
+            {
+                var srcRow = y * stride;
+                var dstRow = (height - 1 - y) * rowStride;
+                for (var x = 0; x < width; x++)
+                {
+                    var src = srcRow + (x * 4);
+                    var dst = dstRow + (x * 3);
+                    pixelData[dst] = pixels[src];
+                    pixelData[dst + 1] = pixels[src + 1];
+                    pixelData[dst + 2] = pixels[src + 2];
+                }
+            }
+
+            var fileHeaderSize = 14;
+            var infoHeaderSize = 40;
+            var fileSize = fileHeaderSize + infoHeaderSize + pixelData.Length;
+            using var stream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var writer = new BinaryWriter(stream);
+            writer.Write((byte)'B');
+            writer.Write((byte)'M');
+            writer.Write(fileSize);
+            writer.Write(0);
+            writer.Write(fileHeaderSize + infoHeaderSize);
+            writer.Write(infoHeaderSize);
+            writer.Write(width);
+            writer.Write(height);
+            writer.Write((short)1);
+            writer.Write((short)24);
+            writer.Write(0);
+            writer.Write(pixelData.Length);
+            writer.Write(0);
+            writer.Write(0);
+            writer.Write(0);
+            writer.Write(0);
+            writer.Write(pixelData);
+        }
+        finally
+        {
+            if (previous != IntPtr.Zero)
+                SelectObject(memoryDc, previous);
+            if (bitmap != IntPtr.Zero)
+                DeleteObject(bitmap);
+            if (memoryDc != IntPtr.Zero)
+                DeleteDC(memoryDc);
+            ReleaseDC(IntPtr.Zero, screenDc);
+        }
+    }
+
     internal static bool IsVirtualKeyDown(int virtualKey) =>
         OperatingSystem.IsWindows() && (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 

@@ -12,6 +12,7 @@ internal sealed partial class InstallerForm
         {
             if (string.IsNullOrWhiteSpace(spec.Url))
                 throw new FileNotFoundException(L("缺少安裝元件且尚未設定下載網址：", "缺少安装组件且尚未设置下载地址：", "コンポーネントがなく、ダウンロードURLも未設定です：", "A package is missing and has no download URL: ") + spec.File);
+            EnsureAllowedReleaseUrl(spec.Url);
             Directory.CreateDirectory(Path.GetDirectoryName(local)!);
             var temporary = local + ".download";
             using var client = new HttpClient { Timeout = TimeSpan.FromHours(2) };

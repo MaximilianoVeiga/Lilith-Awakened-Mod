@@ -33,36 +33,11 @@ internal static class DesktopCommandRouter
                 pictures = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Pictures");
             var directory = Path.Combine(pictures, "Lilith Screenshots");
             Directory.CreateDirectory(directory);
-            var fileName = $"Lilith_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+            var fileName = $"Lilith_{DateTime.Now:yyyyMMdd_HHmmss}.bmp";
             var outputPath = Path.Combine(directory, fileName);
-            var escapedPath = outputPath.Replace("'", "''");
-            var script =
-                "Add-Type -AssemblyName System.Windows.Forms; " +
-                "Add-Type -AssemblyName System.Drawing; " +
-                "$bounds=[System.Windows.Forms.SystemInformation]::VirtualScreen; " +
-                "$bitmap=New-Object System.Drawing.Bitmap($bounds.Width,$bounds.Height); " +
-                "$graphics=[System.Drawing.Graphics]::FromImage($bitmap); " +
-                "$graphics.CopyFromScreen($bounds.Left,$bounds.Top,0,0,$bitmap.Size); " +
-                $"$bitmap.Save('{escapedPath}',[System.Drawing.Imaging.ImageFormat]::Png); " +
-                "$graphics.Dispose(); $bitmap.Dispose();";
-            var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
-            using var process = Process.Start(new ProcessStartInfo("powershell.exe")
-            {
-                Arguments = $"-NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encoded}",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardError = true
-            });
-            if (process == null)
-                throw new InvalidOperationException("The screenshot helper could not be started.");
-            if (!process.WaitForExit(10000))
-            {
-                try { process.Kill(true); } catch { }
-                throw new TimeoutException("The screenshot helper timed out.");
-            }
-            var error = process.StandardError.ReadToEnd();
-            if (process.ExitCode != 0 || !File.Exists(outputPath))
-                throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "No screenshot file was created." : error.Trim());
+            CaptureVirtualScreenToBmp(outputPath);
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("No screenshot file was created.");
 
             reply = DialogueManagerUpdatePatch.ApiKeyText(
                 $"截好了，存在「圖片\\Lilith Screenshots\\{fileName}」。",

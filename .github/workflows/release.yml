@@ -28,10 +28,22 @@ jobs:
             -o artifacts/installer `
             --nologo
 
+      - name: Generate release-manifest.json and SHA256SUMS.txt
+        shell: pwsh
+        run: |
+          ./scripts/generate-release-artifacts.ps1 `
+            -Version "${{ github.ref_name }}" `
+            -Repository "${{ github.repository }}" `
+            -InstallerPath "artifacts/installer/LilithAI-Mod-Setup.exe" `
+            -PackagesDir "packages" `
+            -OutputDir "artifacts/release" `
+            -PackageConfig "release-packages.json"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/installer/LilithAI-Mod-Setup.exe
+          files: artifacts/release/upload/*
           generate_release_notes: true
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

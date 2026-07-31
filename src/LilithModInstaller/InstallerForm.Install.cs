@@ -18,6 +18,7 @@ internal sealed partial class InstallerForm
             else
             {
                 SetStatus(L("正在取得最新發佈資訊…", "正在获取最新发布信息…", "最新のリリース情報を取得中…", "Retrieving the latest release information…"));
+                EnsureAllowedReleaseUrl(DefaultManifestUrl);
                 using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
                 manifestJson = await client.GetStringAsync(DefaultManifestUrl);
             }
