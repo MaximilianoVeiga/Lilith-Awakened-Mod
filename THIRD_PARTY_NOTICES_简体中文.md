@@ -1,5 +1,7 @@
 # 第三方组件与许可声明
 
+[English](THIRD_PARTY_NOTICES.md) · **简体中文**
+
 本候选版本包含、重新分发或可与下列第三方项目配合运行：
 
 * [BepInEx 6.0.0-be.780 IL2CPP](https://github.com/BepInEx/BepInEx)

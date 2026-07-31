@@ -1,6 +1,6 @@
 # 莉莉絲 AI MOD 0.1.1 RC4
 
-[Home](README.md) · **繁體中文** · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
+[Home (English)](README.md) · **繁體中文** · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · [Português (BR)](README_pt-BR.md)
 
 這是《The NOexistenceN of Lilith》桌寵的非官方社群 MOD。它加入 AI 對話、文字與語音輸入、中／日語音、補充無配音台詞、天氣與經過審核的本機電腦操作。
 

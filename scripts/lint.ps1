@@ -1,3 +1,7 @@
+param(
+    [switch]$AllowSkipInjector
+)
+
 $ErrorActionPreference = "Stop"
 
 $sdks = @(dotnet --list-sdks)
@@ -26,8 +30,14 @@ $canLintInjector =
 
 foreach ($project in $projects) {
     if ($project -like "*LilithTextInjector*" -and -not $canLintInjector) {
-        Write-Host "Skipping $project (game interop or BepInEx references not found)."
-        Write-Host "Set GameInterop to the BepInEx/interop folder to include it."
+        if (-not $AllowSkipInjector) {
+            throw @"
+Cannot lint ${project}: game interop or BepInEx references not found.
+Set GameInterop to the BepInEx/interop folder, ensure src/bepinex-be780 is present, or pass -AllowSkipInjector to skip this project.
+"@
+        }
+
+        Write-Host "Skipping $project (game interop or BepInEx references not found; -AllowSkipInjector)."
         continue
     }
 

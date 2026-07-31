@@ -1,5 +1,7 @@
 # Third-Party Components and License Notice
 
+**English** · [简体中文](THIRD_PARTY_NOTICES_简体中文.md)
+
 This release candidate includes, redistributes, or is capable of interoperating with the following third-party projects:
 
 * [BepInEx 6.0.0-be.780 IL2CPP](https://github.com/BepInEx/BepInEx)

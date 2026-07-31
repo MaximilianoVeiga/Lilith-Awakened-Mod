@@ -1,6 +1,6 @@
 # Lilith AI MOD 0.1.1 RC4
 
-[Home](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · **Português (BR)**
+[Home (English)](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · [English](README_EN.md) · **Português (BR)**
 
 Este é um MOD comunitário não oficial para o jogo de companhia de desktop *The NOexistenceN of Lilith*. Ele adiciona conversas com IA, entrada por texto e por voz, saída de voz em chinês e japonês, falas para diálogos que antes não tinham dublagem, recursos de clima e controles locais do computador previamente revisados.
 

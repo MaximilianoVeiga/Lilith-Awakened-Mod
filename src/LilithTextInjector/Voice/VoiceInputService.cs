@@ -29,11 +29,11 @@ internal static class VoiceInputService
         var voiceInputKeyReleased = !voiceInputKeyDown && KeyWasDown;
         KeyWasDown = voiceInputKeyDown;
 
-        if (!Plugin.VoiceInputEnabled.Value || DialogueManagerUpdatePatch._keyBindingTarget != 0)
+        if (!Plugin.VoiceInputEnabled.Value || DialogueManagerUpdatePatch.IsRebindingKeys)
             return;
         if (voiceInputKeyPressed)
         {
-            if (_microphoneRecording || _transcriptionInFlight || DialogueManagerUpdatePatch._requestInFlight)
+            if (_microphoneRecording || _transcriptionInFlight || DialogueManagerUpdatePatch.IsRequestInFlight)
             {
                 manager.ForceSay(DialogueManagerUpdatePatch.LocalizedText("先等我一下……", "先等我一下……", "少し待って……", "Wait for me a moment…"), string.Empty, 4f);
                 return;
@@ -105,7 +105,7 @@ internal static class VoiceInputService
             _wasapiStream = null;
             if (wav.Length < 2048)
             {
-                DialogueManagerUpdatePatch.PendingTranscriptionErrors.Enqueue(DialogueManagerUpdatePatch.LocalizedText("剛才沒有收到聲音，再試一次吧。", "刚才没有收到声音，再试一次吧。", "今の声は届かなかったみたい。もう一度試してみて。", "I didn't receive that audio. Please try again."));
+                DialogueManagerUpdatePatch.EnqueueTranscriptionError(DialogueManagerUpdatePatch.LocalizedText("剛才沒有收到聲音，再試一次吧。", "刚才没有收到声音，再试一次吧。", "今の声は届かなかったみたい。もう一度試してみて。", "I didn't receive that audio. Please try again."));
                 return;
             }
             var elapsed = Math.Max(0f, Time.unscaledTime - _microphoneStartedAt);
@@ -113,7 +113,7 @@ internal static class VoiceInputService
             var prepared = NormalizeVoiceWav(wav, qwenVoiceInput ? 16000 : 24000);
             if (elapsed < 0.3f || (prepared.Measured && prepared.Peak < 0.0005f && prepared.Rms < 0.00005d))
             {
-                DialogueManagerUpdatePatch.PendingTranscriptionErrors.Enqueue(DialogueManagerUpdatePatch.LocalizedText(
+                DialogueManagerUpdatePatch.EnqueueTranscriptionError(DialogueManagerUpdatePatch.LocalizedText(
                     "剛才沒有收到聲音，再試一次吧。",
                     "刚才没有收到声音，再试一次吧。",
                     "今の録音には声が入っていなかったみたい。もう一度試してみて。",
@@ -138,7 +138,7 @@ internal static class VoiceInputService
         {
             CleanupWasapiCapture();
             Plugin.PluginLog.LogWarning($"Could not finish microphone recording: {exception.Message}");
-            DialogueManagerUpdatePatch.PendingTranscriptionErrors.Enqueue(DialogueManagerUpdatePatch.LocalizedText("剛才沒有聽清楚，再試一次吧。", "刚才没有听清楚，再试一次吧。", "今の声はうまく聞き取れなかった。もう一度試してみて。", "I couldn't understand that recording. Please try again."));
+            DialogueManagerUpdatePatch.EnqueueTranscriptionError(DialogueManagerUpdatePatch.LocalizedText("剛才沒有聽清楚，再試一次吧。", "刚才没有听清楚，再试一次吧。", "今の声はうまく聞き取れなかった。もう一度試してみて。", "I couldn't understand that recording. Please try again."));
         }
     }
 
@@ -360,7 +360,7 @@ internal static class VoiceInputService
             var transcript = DialogueManagerUpdatePatch.CleanReply(await sessionTask.ConfigureAwait(false));
             if (string.IsNullOrWhiteSpace(transcript))
                 throw new InvalidOperationException("Paraformer returned an empty transcript.");
-            DialogueManagerUpdatePatch.PendingTranscripts.Enqueue(transcript);
+            DialogueManagerUpdatePatch.EnqueueTranscript(transcript);
             Plugin.PluginLog.LogInfo($"Paraformer real-time transcription completed in {timer.Elapsed.TotalSeconds:F2}s after key release ({transcript.Length} chars; content hidden from log).");
             _transcriptionInFlight = false;
         }
@@ -494,13 +494,13 @@ internal static class VoiceInputService
             var transcript = DialogueManagerUpdatePatch.CleanReply(builder.ToString());
             if (string.IsNullOrWhiteSpace(transcript))
                 throw new InvalidOperationException("Gemini returned an empty transcript.");
-            DialogueManagerUpdatePatch.PendingTranscripts.Enqueue(transcript);
+            DialogueManagerUpdatePatch.EnqueueTranscript(transcript);
             Plugin.PluginLog.LogInfo($"Voice transcription completed ({transcript.Length} chars; content hidden from log).");
         }
         catch (Exception exception)
         {
             Plugin.PluginLog.LogError($"Voice transcription failed: {exception}");
-            DialogueManagerUpdatePatch.PendingTranscriptionErrors.Enqueue(DialogueManagerUpdatePatch.LocalizedText("剛才沒有聽清楚，再試一次吧。", "刚才没有听清楚，再试一次吧。", "今の声はうまく聞き取れなかった。もう一度試してみて。", "I couldn't understand that recording. Please try again."));
+            DialogueManagerUpdatePatch.EnqueueTranscriptionError(DialogueManagerUpdatePatch.LocalizedText("剛才沒有聽清楚，再試一次吧。", "刚才没有听清楚，再试一次吧。", "今の声はうまく聞き取れなかった。もう一度試してみて。", "I couldn't understand that recording. Please try again."));
         }
         finally
         {
@@ -550,7 +550,7 @@ internal static class VoiceInputService
             var transcript = DialogueManagerUpdatePatch.CleanReply(document.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? string.Empty);
             if (string.IsNullOrWhiteSpace(transcript))
                 throw new InvalidOperationException("Qwen returned an empty transcript.");
-            DialogueManagerUpdatePatch.PendingTranscripts.Enqueue(transcript);
+            DialogueManagerUpdatePatch.EnqueueTranscript(transcript);
             var emotion = "unknown";
             var message = document.RootElement.GetProperty("choices")[0].GetProperty("message");
             if (message.TryGetProperty("annotations", out var annotations) && annotations.ValueKind == JsonValueKind.Array)
@@ -564,7 +564,7 @@ internal static class VoiceInputService
         catch (Exception exception)
         {
             Plugin.PluginLog.LogError($"Qwen voice transcription failed: {exception}");
-            DialogueManagerUpdatePatch.PendingTranscriptionErrors.Enqueue(DialogueManagerUpdatePatch.IsQwenAccountUnavailable(exception)
+            DialogueManagerUpdatePatch.EnqueueTranscriptionError(DialogueManagerUpdatePatch.IsQwenAccountUnavailable(exception)
                 ? DialogueManagerUpdatePatch.QwenAccountUnavailableReply()
                 : DialogueManagerUpdatePatch.LocalizedText("剛才沒有聽清楚，再試一次吧。", "刚才没有听清楚，再试一次吧。", "今の声はうまく聞き取れなかった。もう一度試してみて。", "I couldn't understand that recording. Please try again."));
         }

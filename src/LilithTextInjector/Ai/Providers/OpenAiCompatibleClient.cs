@@ -39,8 +39,8 @@ internal static class OpenAiCompatibleClient
     private static object[] BuildMessages(string systemInstruction)
     {
         var messages = new List<object> { new { role = "system", content = systemInstruction } };
-        ChatMemory.ForEach(turn =>
-            messages.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text }));
+        foreach (var turn in ChatMemory.Snapshot())
+            messages.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text });
         return messages.ToArray();
     }
 }

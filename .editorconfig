@@ -9,7 +9,7 @@ indent_size = 4
 trim_trailing_whitespace = true
 
 [*.cs]
-dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-Style.severity = suggestion
 dotnet_analyzer_diagnostic.category-Design.severity = suggestion
 dotnet_analyzer_diagnostic.category-Performance.severity = suggestion
 dotnet_analyzer_diagnostic.category-Reliability.severity = suggestion

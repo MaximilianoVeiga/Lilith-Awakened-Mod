@@ -23,8 +23,8 @@ internal static class ChatMemory
                 Turns.AddRange(loaded.GetRange(
                     Math.Max(0, loaded.Count - MaxRememberedTurns),
                     Math.Min(MaxRememberedTurns, loaded.Count)));
+                Plugin.PluginLog.LogInfo($"Loaded {Turns.Count} remembered chat turns.");
             }
-            Plugin.PluginLog.LogInfo($"Loaded {Turns.Count} remembered chat turns.");
         }
         catch (Exception exception)
         {
@@ -56,15 +56,6 @@ internal static class ChatMemory
     {
         lock (Lock)
             return new List<ChatTurn>(Turns);
-    }
-
-    internal static void ForEach(Action<ChatTurn> action)
-    {
-        lock (Lock)
-        {
-            foreach (var turn in Turns)
-                action(turn);
-        }
     }
 }
 

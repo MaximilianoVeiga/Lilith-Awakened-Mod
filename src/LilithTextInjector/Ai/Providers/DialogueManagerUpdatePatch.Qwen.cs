@@ -26,8 +26,8 @@ internal static partial class DialogueManagerUpdatePatch
     private static object[] BuildQwenInput()
     {
         var input = new List<object>();
-        ChatMemory.ForEach(turn =>
-            input.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text }));
+        foreach (var turn in ChatMemory.Snapshot())
+            input.Add(new { role = turn.Role == "model" ? "assistant" : "user", content = turn.Text });
         return input.ToArray();
     }
 

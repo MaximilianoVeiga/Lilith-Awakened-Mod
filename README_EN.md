@@ -1,17 +1,23 @@
 # Lilith AI MOD 0.1.1 RC4
 
-[Home](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · **English** · [Português (BR)](README_pt-BR.md)
+[Home (English)](README.md) · [繁體中文](README_繁體中文.md) · [简体中文](README_简体中文.md) · [日本語](README_日本語.md) · **English (detailed)** · [Português (BR)](README_pt-BR.md)
 
 This is an unofficial community MOD for the desktop companion game *The NOexistenceN of Lilith*. It adds AI conversations, text and voice input, Chinese and Japanese voice output, voice lines for previously unvoiced dialogue, weather features, and reviewed local computer controls.
 
+For a shorter overview with download links and screenshots, see the [project home README](README.md).
+
 ## RC4 Update
 
-* Added compatibility with the categorized settings interface in official Build `24273498`.
-* MOD controls now appear only on the **Controls** tab and no longer overlap other settings pages.
+* Startup stages are isolated so one incompatible optional hook no longer prevents the remaining MOD features from loading; errors are written to `BepInEx/LogOutput.log`.
+* The installer retries transient file locks, reports the exact failing path, and verifies BepInEx plus the MOD DLL after extraction.
+* Fixed voice-button desynchronization after restart or opening settings, and being unable to switch back to Chinese after selecting Japanese; both language choices now persist correctly.
+* The local voice host starts only the selected language service, restarts cleanly on language changes, and supports the voice callback in official Build `24275097`.
+* Qwen realtime speech recognition uses the configured realtime model; HTTP fallback keeps the regular ASR model.
+* Known legacy mojibake defaults are migrated without overwriting player-customized prompts or settings.
+* Added compatibility with the categorized settings interface in official Build `24273498`; MOD controls appear only on the **Controls** tab.
 * Fixed F6/F7 working only once, keyboard rebinding, and Esc cancellation.
-* Chinese and Japanese built-in/supplemental voice selection remains fully separated.
 * Added tested Qwen chat and speech recognition, provider-native web search, and reliable local routing for explicit computer commands.
-* Installed applications can now be resolved from running processes, Windows Start apps, Store/MSIX registrations, and shortcuts without hard-coded player paths.
+* Installed applications can be resolved from running processes, Windows Start apps, Store/MSIX registrations, and shortcuts without hard-coded player paths.
 * Fixed API-key dialogs retaining mouse/keyboard focus and kept the native entitlement redemption window separate from API-key entry.
 * The installer can optionally merge the privacy-minimized Lilith Codex bridge into existing Codex Hooks without replacing unrelated hooks.
 

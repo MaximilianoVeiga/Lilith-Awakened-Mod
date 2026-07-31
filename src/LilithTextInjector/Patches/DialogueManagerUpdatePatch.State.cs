@@ -11,15 +11,15 @@ internal static partial class DialogueManagerUpdatePatch
     private static bool _focusNextFrame;
     private static readonly ConcurrentQueue<string> PendingReplies = new();
     private static readonly ConcurrentQueue<string> PendingAiEmotions = new();
-    internal static readonly ConcurrentQueue<string> PendingTranscripts = new();
-    internal static readonly ConcurrentQueue<string> PendingTranscriptionErrors = new();
+    private static readonly ConcurrentQueue<string> PendingTranscripts = new();
+    private static readonly ConcurrentQueue<string> PendingTranscriptionErrors = new();
     private static readonly ConcurrentQueue<GeneratedAiNote> PendingAiNotes = new();
     private static readonly ConcurrentQueue<GeminiToolBatch> PendingGeminiToolBatches = new();
     private static readonly ConcurrentQueue<GeminiAgentSession> PendingGeminiCompatibilityFallbacks = new();
     private static readonly ConcurrentQueue<QwenToolBatch> PendingQwenToolBatches = new();
     private static bool _aiNoteGenerationInFlight;
     private static float _nextAiNoteCheckAt;
-    internal static bool _requestInFlight;
+    private static bool _requestInFlight;
     private static bool _aiPagesAwaitingAdvance;
     private static string _currentAiPageText = string.Empty;
     private static float _aiTypingFinishedAt = -1f;
@@ -63,7 +63,7 @@ internal static partial class DialogueManagerUpdatePatch
     private static ButtonToggle? _voiceInputKeyButton;
     private static TMP_Text? _textInputKeyValue;
     private static TMP_Text? _voiceInputKeyValue;
-    internal static int _keyBindingTarget;
+    private static int _keyBindingTarget;
     private static float _keyBindingStartedAt = -1f;
     private static bool _textInputKeyWasDown;
     private static readonly HashSet<int> RebindingHeldVirtualKeys = new();
@@ -79,4 +79,10 @@ internal static partial class DialogueManagerUpdatePatch
         "LilithAiMod", "CodexBridge", "events");
     private static float _nextCodexBridgePollAt;
     private static float _nextCodexSignalAt;
+
+    // Intent-named surfaces for VoiceInputService (queues/flags stay private).
+    internal static bool IsRequestInFlight => _requestInFlight;
+    internal static bool IsRebindingKeys => _keyBindingTarget != 0;
+    internal static void EnqueueTranscript(string transcript) => PendingTranscripts.Enqueue(transcript);
+    internal static void EnqueueTranscriptionError(string message) => PendingTranscriptionErrors.Enqueue(message);
 }
