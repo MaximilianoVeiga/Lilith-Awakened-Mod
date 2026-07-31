@@ -79,7 +79,7 @@ Both links provide the complete RC4 package. The archive password is `I love you
 
 ### Manual GitHub Release download
 
-[GitHub Release](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases) Assets are listed flat, but the RC4 installer expects local packages inside a `packages` subfolder. If you download the assets manually, arrange them like this:
+[GitHub Release](https://github.com/MaximilianoVeiga/Lilith-Awakened-Mod/releases) assets are listed flat, but the installer expects local packages inside a `packages` subfolder. If you download the assets manually, arrange them like this:
 
 ```text
 Lilith-Awakened-Mod-0.1.1-RC4
@@ -92,7 +92,9 @@ Lilith-Awakened-Mod-0.1.1-RC4
    └─ voice-runtime.zip
 ```
 
-If you download only the EXE, the installer retrieves the RC4 manifest and missing packages automatically. The unchanged supplemental voice pack is reused from RC1; the updated voice runtime comes from the RC4 release. If networking, regional limits, or large-file downloads fail, use the Google Drive or Baidu full package above.
+Pushing a `v*` tag runs the Release workflow: it publishes `LilithAI-Mod-Setup.exe` and automatically generates `release-manifest.json` and `SHA256SUMS.txt`. Unchanged large packages are reused from earlier tags via `release-packages.json`; new zips placed under `packages/` are hashed and uploaded with that release.
+
+If you download only the EXE, the installer retrieves the latest release manifest and missing packages automatically. The unchanged supplemental voice pack is reused from RC1; the updated voice runtime comes from the RC4 release. If networking, regional limits, or large-file downloads fail, use the Google Drive or Baidu full package above.
 
 ### Install steps
 
