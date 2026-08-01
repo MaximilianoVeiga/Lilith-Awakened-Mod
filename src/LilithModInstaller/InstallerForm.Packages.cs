@@ -20,22 +20,24 @@ internal sealed partial class InstallerForm
             response.EnsureSuccessStatusCode();
             var total = response.Content.Headers.ContentLength ?? spec.Bytes;
             await using var source = await response.Content.ReadAsStreamAsync();
-            await using var destination = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None);
-            var buffer = new byte[1024 * 256];
-            long received = 0;
-            int read;
-            while ((read = await source.ReadAsync(buffer)) > 0)
+            await using (var destination = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                await destination.WriteAsync(buffer.AsMemory(0, read));
-                received += read;
-                if (total > 0) _progress.Value = Math.Clamp((int)(received * 70 / total), 0, 70);
-                SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
+                var buffer = new byte[1024 * 256];
+                long received = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer)) > 0)
+                {
+                    await destination.WriteAsync(buffer.AsMemory(0, read));
+                    received += read;
+                    if (total > 0) _progress.Value = Math.Clamp((int)(received * 70 / total), 0, 70);
+                    SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
+                }
             }
-            File.Move(temporary, local, true);
+            ReplaceFileWithRetry(temporary, local);
         }
         if (!string.IsNullOrWhiteSpace(spec.Sha256))
         {
-            using var stream = File.OpenRead(local);
+            await using var stream = new FileStream(local, FileMode.Open, FileAccess.Read, FileShare.Read);
             var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream));
             if (!hash.Equals(spec.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException($"Checksum mismatch for {spec.File}.");
@@ -55,10 +57,64 @@ internal sealed partial class InstallerForm
             if (!destination.StartsWith(game + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Package contains an unsafe path.");
             Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
-            entry.ExtractToFile(destination, true);
+            ExtractEntryWithRetry(entry, destination);
             files.Add(Path.GetRelativePath(game, destination));
         }
         return files;
+    }
+
+    private static void ExtractEntryWithRetry(ZipArchiveEntry entry, string destination)
+    {
+        const int attempts = 8;
+        for (var attempt = 1; attempt <= attempts; attempt++)
+        {
+            var temporary = destination + ".install-tmp";
+            try
+            {
+                if (File.Exists(temporary))
+                    File.Delete(temporary);
+                entry.ExtractToFile(temporary, true);
+                ReplaceFileWithRetry(temporary, destination);
+                return;
+            }
+            catch (IOException exception) when (IsSharingViolation(exception) && attempt < attempts)
+            {
+                try { if (File.Exists(temporary)) File.Delete(temporary); } catch { /* ignore */ }
+                Thread.Sleep(250 * attempt);
+            }
+            catch
+            {
+                try { if (File.Exists(temporary)) File.Delete(temporary); } catch { /* ignore */ }
+                throw;
+            }
+        }
+    }
+
+    private static void ReplaceFileWithRetry(string source, string destination)
+    {
+        const int attempts = 8;
+        IOException? last = null;
+        for (var attempt = 1; attempt <= attempts; attempt++)
+        {
+            try
+            {
+                if (File.Exists(destination))
+                {
+                    File.SetAttributes(destination, FileAttributes.Normal);
+                    File.Delete(destination);
+                }
+                File.Move(source, destination);
+                return;
+            }
+            catch (IOException exception) when (IsSharingViolation(exception))
+            {
+                last = exception;
+                Thread.Sleep(250 * attempt);
+            }
+        }
+        throw new IOException(
+            $"Could not replace '{destination}' because another process is using it.",
+            last);
     }
 
     // Lilith-Awakened-Assets voice-pack.zip uses native-voice-pack/ at the zip root;

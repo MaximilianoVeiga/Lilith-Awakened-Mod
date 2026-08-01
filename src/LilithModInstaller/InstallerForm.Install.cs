@@ -57,6 +57,14 @@ internal sealed partial class InstallerForm
             MessageBox.Show(this, L("請先關閉莉莉絲桌寵，再重新按安裝。", "请先关闭莉莉丝桌宠，再重新点击安装。", "リリスを終了してから、もう一度インストールしてください。", "Close Lilith before installing, then try again."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
+        if (FindLockingModProcesses(game) is { Count: > 0 } locking)
+        {
+            var names = string.Join(", ", locking.Distinct(StringComparer.OrdinalIgnoreCase));
+            MessageBox.Show(this,
+                L("請先關閉仍在執行的語音／MOD 相關程式，再重新按安裝：", "请先关闭仍在运行的语音／MOD 相关程序，再重新点击安装：", "音声／MOD 関連プロセスを終了してから、もう一度インストールしてください：", "Close these still-running voice/mod processes, then try again: ") + names,
+                Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
 
         SetBusy(true);
         var installed = new InstalledManifest { Version = _manifest.Version, InstalledAt = DateTimeOffset.Now };
@@ -93,6 +101,18 @@ internal sealed partial class InstallerForm
             SetStatus(L("安裝完成。API Key 請在左下角莉莉絲選單中由玩家自行輸入。", "安装完成。API Key 请在左下角莉莉丝菜单中由玩家自行输入。", "インストール完了。APIキーは左下のリリスメニューから入力してください。", "Installation complete. Enter your own API key from Lilith's lower-left tray menu."));
             if (_launch.Checked)
                 Process.Start(new ProcessStartInfo(Path.Combine(game, "Lilith.exe")) { WorkingDirectory = game, UseShellExecute = true });
+        }
+        catch (IOException exception) when (IsSharingViolation(exception))
+        {
+            _progress.Value = 0;
+            var message = L(
+                "無法寫入檔案（正被其他程式占用）。請關閉 Lilith、LilithVoiceHost，以及可能鎖定遊戲資料夾的防毒／檔案總管預覽後再試。\n",
+                "无法写入文件（正被其他程序占用）。请关闭 Lilith、LilithVoiceHost，以及可能锁定游戏文件夹的杀毒／资源管理器预览后再试。\n",
+                "ファイルを書き込めません（他のプロセスが使用中）。Lilith・LilithVoiceHost・ゲームフォルダーをロックしている可能性のあるウイルス対策／エクスプローラーを終了してから再試行してください。\n",
+                "Cannot write a file because another process is using it. Close Lilith, LilithVoiceHost, and any antivirus/Explorer preview locking the game folder, then try again.\n")
+                + exception.Message;
+            SetStatus(L("安裝失敗：", "安装失败：", "インストール失敗：", "Installation failed: ") + exception.Message);
+            MessageBox.Show(this, message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         catch (UnauthorizedAccessException)
         {
@@ -151,6 +171,59 @@ internal sealed partial class InstallerForm
         }
 
         File.WriteAllLines(path, lines, new UTF8Encoding(false));
+    }
+
+    private static List<string> FindLockingModProcesses(string game)
+    {
+        var found = new List<string>();
+        foreach (var name in new[] { "LilithVoiceHost", "uv", "python", "pythonw" })
+        {
+            foreach (var process in Process.GetProcessesByName(name))
+            {
+                try
+                {
+                    using (process)
+                    {
+                        string? path = null;
+                        try { path = process.MainModule?.FileName; } catch { /* access denied for some system processes */ }
+                        if (string.IsNullOrWhiteSpace(path))
+                        {
+                            if (name.Equals("LilithVoiceHost", StringComparison.OrdinalIgnoreCase))
+                                found.Add(process.ProcessName);
+                            continue;
+                        }
+                        var full = Path.GetFullPath(path);
+                        if (full.StartsWith(game + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                            || full.Contains("LilithTextInjector", StringComparison.OrdinalIgnoreCase)
+                            || name.Equals("LilithVoiceHost", StringComparison.OrdinalIgnoreCase))
+                        {
+                            found.Add($"{process.ProcessName} ({Path.GetFileName(full)})");
+                        }
+                    }
+                }
+                catch
+                {
+                    // Ignore processes we cannot inspect.
+                }
+            }
+        }
+        return found;
+    }
+
+    private static bool IsSharingViolation(Exception exception)
+    {
+        for (var current = exception; current != null; current = current.InnerException)
+        {
+            if (current is IOException io)
+            {
+                var hr = io.HResult & 0xFFFF;
+                // ERROR_SHARING_VIOLATION (32), ERROR_LOCK_VIOLATION (33)
+                if (hr is 32 or 33) return true;
+                if (io.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private async Task UninstallAsync()
