@@ -3,41 +3,60 @@ namespace LilithModInstaller;
 // Package download, verification, extraction and voice runtime preparation.
 internal sealed partial class InstallerForm
 {
+    private static string PackageCacheDirectory =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LilithAI-Mod-Setup", "packages");
+
     private async Task<string> AcquirePackageAsync(string name)
     {
         if (!_manifest.Packages.TryGetValue(name, out var spec))
             throw new InvalidOperationException($"Package '{name}' is missing from release-manifest.json.");
-        var local = Path.Combine(_baseDirectory, "packages", spec.File);
+
+        // Prefer a packages/ folder next to the EXE (full offline bundle); otherwise use a writable LocalAppData cache.
+        var besideExe = Path.Combine(_baseDirectory, "packages", spec.File);
+        var cached = Path.Combine(PackageCacheDirectory, spec.File);
+        var local = File.Exists(besideExe) ? besideExe : cached;
+
         if (!File.Exists(local))
         {
             if (string.IsNullOrWhiteSpace(spec.Url))
                 throw new FileNotFoundException(L("缺少安裝元件且尚未設定下載網址：", "缺少安装组件且尚未设置下载地址：", "コンポーネントがなく、ダウンロードURLも未設定です：", "A package is missing and has no download URL: ") + spec.File);
             EnsureAllowedReleaseUrl(spec.Url);
-            Directory.CreateDirectory(Path.GetDirectoryName(local)!);
-            var temporary = local + ".download";
-            using var client = new HttpClient { Timeout = TimeSpan.FromHours(2) };
-            using var response = await client.GetAsync(spec.Url, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            var total = response.Content.Headers.ContentLength ?? spec.Bytes;
-            await using var source = await response.Content.ReadAsStreamAsync();
-            await using (var destination = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+            Directory.CreateDirectory(PackageCacheDirectory);
+            local = cached;
+            var temporary = Path.Combine(PackageCacheDirectory, spec.File + "." + Guid.NewGuid().ToString("N") + ".download");
+            try
             {
-                var buffer = new byte[1024 * 256];
-                long received = 0;
-                int read;
-                while ((read = await source.ReadAsync(buffer)) > 0)
+                using var client = new HttpClient { Timeout = TimeSpan.FromHours(2) };
+                using var response = await client.GetAsync(spec.Url, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+                var total = response.Content.Headers.ContentLength ?? spec.Bytes;
+                await using var source = await response.Content.ReadAsStreamAsync();
+                // FileShare.Read lets antivirus scan the growing file without failing exclusive writers.
+                await using (var destination = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.Read))
                 {
-                    await destination.WriteAsync(buffer.AsMemory(0, read));
-                    received += read;
-                    if (total > 0) _progress.Value = Math.Clamp((int)(received * 70 / total), 0, 70);
-                    SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
+                    var buffer = new byte[1024 * 256];
+                    long received = 0;
+                    int read;
+                    while ((read = await source.ReadAsync(buffer)) > 0)
+                    {
+                        await destination.WriteAsync(buffer.AsMemory(0, read));
+                        received += read;
+                        if (total > 0) _progress.Value = Math.Clamp((int)(received * 70 / total), 0, 70);
+                        SetStatus(string.Format(CultureInfo.CurrentCulture, L("正在下載 {0}：{1:0.0} MB", "正在下载 {0}：{1:0.0} MB", "{0} をダウンロード中：{1:0.0} MB", "Downloading {0}: {1:0.0} MB"), name, received / 1048576d));
+                    }
                 }
+                await Task.Delay(200); // brief pause so Defender can finish scanning the closed download
+                ReplaceFileWithRetry(temporary, local);
             }
-            ReplaceFileWithRetry(temporary, local);
+            finally
+            {
+                try { if (File.Exists(temporary)) File.Delete(temporary); } catch { /* ignore */ }
+            }
         }
+
         if (!string.IsNullOrWhiteSpace(spec.Sha256))
         {
-            await using var stream = new FileStream(local, FileMode.Open, FileAccess.Read, FileShare.Read);
+            await using var stream = new FileStream(local, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream));
             if (!hash.Equals(spec.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException($"Checksum mismatch for {spec.File}.");
@@ -65,22 +84,25 @@ internal sealed partial class InstallerForm
 
     private static void ExtractEntryWithRetry(ZipArchiveEntry entry, string destination)
     {
-        const int attempts = 8;
+        const int attempts = 12;
         for (var attempt = 1; attempt <= attempts; attempt++)
         {
-            var temporary = destination + ".install-tmp";
+            var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".install-tmp";
             try
             {
-                if (File.Exists(temporary))
-                    File.Delete(temporary);
                 entry.ExtractToFile(temporary, true);
+                if (File.Exists(destination) && FilesHaveSameLengthAndHash(temporary, destination))
+                {
+                    File.Delete(temporary);
+                    return;
+                }
                 ReplaceFileWithRetry(temporary, destination);
                 return;
             }
-            catch (IOException exception) when (IsSharingViolation(exception) && attempt < attempts)
+            catch (Exception exception) when (IsSharingOrLockException(exception) && attempt < attempts)
             {
                 try { if (File.Exists(temporary)) File.Delete(temporary); } catch { /* ignore */ }
-                Thread.Sleep(250 * attempt);
+                Thread.Sleep(300 * attempt);
             }
             catch
             {
@@ -92,29 +114,77 @@ internal sealed partial class InstallerForm
 
     private static void ReplaceFileWithRetry(string source, string destination)
     {
-        const int attempts = 8;
-        IOException? last = null;
+        const int attempts = 12;
+        Exception? last = null;
         for (var attempt = 1; attempt <= attempts; attempt++)
         {
             try
             {
-                if (File.Exists(destination))
+                Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                if (!File.Exists(destination))
                 {
-                    File.SetAttributes(destination, FileAttributes.Normal);
-                    File.Delete(destination);
+                    File.Move(source, destination);
+                    return;
                 }
+
+                try
+                {
+                    var backup = destination + ".bak";
+                    if (File.Exists(backup))
+                    {
+                        File.SetAttributes(backup, FileAttributes.Normal);
+                        File.Delete(backup);
+                    }
+                    File.Replace(source, destination, backup, ignoreMetadataErrors: true);
+                    try { if (File.Exists(backup)) File.Delete(backup); } catch { /* ignore */ }
+                    try { if (File.Exists(source)) File.Delete(source); } catch { /* ignore */ }
+                    return;
+                }
+                catch (Exception exception) when (IsSharingOrLockException(exception))
+                {
+                    // Fall through to delete+move / copy strategies.
+                    last = exception;
+                }
+
+                File.SetAttributes(destination, FileAttributes.Normal);
+                File.Delete(destination);
                 File.Move(source, destination);
                 return;
             }
-            catch (IOException exception) when (IsSharingViolation(exception))
+            catch (Exception exception) when (IsSharingOrLockException(exception))
             {
                 last = exception;
-                Thread.Sleep(250 * attempt);
+                Thread.Sleep(300 * attempt);
             }
         }
+
+        var lockers = FileLockUtil.GetLockingProcessNames(destination);
+        var detail = lockers.Count > 0
+            ? $" Locked by: {string.Join(", ", lockers)}."
+            : string.Empty;
         throw new IOException(
-            $"Could not replace '{destination}' because another process is using it.",
+            $"Could not replace '{destination}' because another process is using it.{detail}",
             last);
+    }
+
+    private static bool FilesHaveSameLengthAndHash(string left, string right)
+    {
+        try
+        {
+            var leftInfo = new FileInfo(left);
+            var rightInfo = new FileInfo(right);
+            if (!leftInfo.Exists || !rightInfo.Exists || leftInfo.Length != rightInfo.Length)
+                return false;
+            using var leftStream = new FileStream(left, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var rightStream = new FileStream(right, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var leftHash = SHA256.HashData(leftStream);
+            var rightHash = SHA256.HashData(rightStream);
+            return leftHash.AsSpan().SequenceEqual(rightHash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     // Lilith-Awakened-Assets voice-pack.zip uses native-voice-pack/ at the zip root;

@@ -102,14 +102,14 @@ internal sealed partial class InstallerForm
             if (_launch.Checked)
                 Process.Start(new ProcessStartInfo(Path.Combine(game, "Lilith.exe")) { WorkingDirectory = game, UseShellExecute = true });
         }
-        catch (IOException exception) when (IsSharingViolation(exception))
+        catch (Exception exception) when (IsSharingOrLockException(exception))
         {
             _progress.Value = 0;
             var message = L(
-                "無法寫入檔案（正被其他程式占用）。請關閉 Lilith、LilithVoiceHost，以及可能鎖定遊戲資料夾的防毒／檔案總管預覽後再試。\n",
-                "无法写入文件（正被其他程序占用）。请关闭 Lilith、LilithVoiceHost，以及可能锁定游戏文件夹的杀毒／资源管理器预览后再试。\n",
-                "ファイルを書き込めません（他のプロセスが使用中）。Lilith・LilithVoiceHost・ゲームフォルダーをロックしている可能性のあるウイルス対策／エクスプローラーを終了してから再試行してください。\n",
-                "Cannot write a file because another process is using it. Close Lilith, LilithVoiceHost, and any antivirus/Explorer preview locking the game folder, then try again.\n")
+                "無法寫入檔案（正被其他程式占用）。請關閉 Lilith、LilithVoiceHost，並暫時排除遊戲資料夾的即時防毒掃描後再試。\n",
+                "无法写入文件（正被其他程序占用）。请关闭 Lilith、LilithVoiceHost，并暂时排除游戏文件夹的实时杀毒扫描后再试。\n",
+                "ファイルを書き込めません（他のプロセスが使用中）。Lilith・LilithVoiceHost を終了し、ゲームフォルダーのリアルタイム保護を一時除外してから再試行してください。\n",
+                "Cannot write a file because another process is using it. Close Lilith and LilithVoiceHost, and temporarily exclude the game folder from realtime antivirus, then try again.\n")
                 + exception.Message;
             SetStatus(L("安裝失敗：", "安装失败：", "インストール失敗：", "Installation failed: ") + exception.Message);
             MessageBox.Show(this, message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -210,21 +210,28 @@ internal sealed partial class InstallerForm
         return found;
     }
 
-    private static bool IsSharingViolation(Exception exception)
+    private static bool IsSharingOrLockException(Exception exception)
     {
         for (var current = exception; current != null; current = current.InnerException)
         {
-            if (current is IOException io)
+            if (current is IOException or UnauthorizedAccessException)
             {
-                var hr = io.HResult & 0xFFFF;
-                // ERROR_SHARING_VIOLATION (32), ERROR_LOCK_VIOLATION (33)
+                var hr = current.HResult & 0xFFFF;
+                // ERROR_SHARING_VIOLATION (32), ERROR_LOCK_VIOLATION (33), ERROR_ACCESS_DENIED (5) when caused by locks
                 if (hr is 32 or 33) return true;
-                if (io.Message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase))
+                var message = current.Message;
+                if (message.Contains("being used by another process", StringComparison.OrdinalIgnoreCase)
+                    || message.Contains("another process", StringComparison.OrdinalIgnoreCase)
+                    || message.Contains("cannot access the file", StringComparison.OrdinalIgnoreCase))
+                {
                     return true;
+                }
             }
         }
         return false;
     }
+
+    private static bool IsSharingViolation(Exception exception) => IsSharingOrLockException(exception);
 
     private async Task UninstallAsync()
     {
